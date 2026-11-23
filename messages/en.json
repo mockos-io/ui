@@ -19,5 +19,20 @@
     "SIGN_IN_OAUTH": "Sign in with Google",
     "ACCOUNT_QUESTION": "Don't have an account?",
     "SIGN_UP": "Sign up"
+  },
+  "REGISTER": {
+    "TITLE": "Create an account",
+    "SUBTITLE": "Please enter your details to sign up.",
+    "NAME": "Full Name",
+    "NAME_PLACEHOLDER": "Jane Doe",
+    "EMAIL": "Work Email",
+    "EMAIL_PLACEHOLDER": "jane@company.com",
+    "PASSWORD": "Password",
+    "PASSWORD_PLACEHOLDER": "••••••••",
+    "EMAIL_INVALID": "Enter a valid email address",
+    "PASSWORD_ERROR_TITLE": "Password must contain:",
+    "PASSWORD_MIN_LENGTH": "At least 8 characters",
+    "PASSWORD_UPPERCASE": "One uppercase letter",
+    "PASSWORD_NUMBER_OR_SPECIAL": "One number or special character"
   }
 }
