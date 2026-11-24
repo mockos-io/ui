@@ -33,6 +33,10 @@
     "PASSWORD_ERROR_TITLE": "Password must contain:",
     "PASSWORD_MIN_LENGTH": "At least 8 characters",
     "PASSWORD_UPPERCASE": "One uppercase letter",
-    "PASSWORD_NUMBER_OR_SPECIAL": "One number or special character"
+    "PASSWORD_NUMBER_OR_SPECIAL": "One number or special character",
+    "SIGN_UP": "Sign Up",
+    "SIGN_UP_OAUTH": "Google",
+    "ACCOUNT_QUESTION": "Already have an account?",
+    "SIGN_IN": "Sign in"
   }
 }
