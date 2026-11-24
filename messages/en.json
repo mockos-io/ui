@@ -38,5 +38,9 @@
     "SIGN_UP_OAUTH": "Google",
     "ACCOUNT_QUESTION": "Already have an account?",
     "SIGN_IN": "Sign in"
+  },
+  "TEXT_INPUT": {
+    "SHOW": "Show password",
+    "HIDE": "Hide password"
   }
 }
