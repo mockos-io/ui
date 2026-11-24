@@ -19,7 +19,7 @@ type RegisterFormValues = {
 export default function Register() {
   const t = useTranslations();
 
-  const loginSchema = z.object({
+  const signUpSchema = z.object({
     name: z.string().trim().min(1, t("COMMON.REQUIRED")),
     email: z
       .email(t("REGISTER.EMAIL_INVALID"))
@@ -37,7 +37,7 @@ export default function Register() {
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormValues>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(signUpSchema),
     mode: "onBlur",
   });
 
@@ -106,7 +106,7 @@ export default function Register() {
         )}
 
         <Button type="submit">
-          {t("LOGIN.SIGN_UP")}
+          {t("REGISTER.SIGN_UP")}
           <Image
             className="h-3 w-3"
             src="/arrow-right.svg"
@@ -119,7 +119,7 @@ export default function Register() {
         <div className="w-full flex gap-2 items-center pt-10 pb-10">
           <Divider />
           <span className="text-[0.875rem] text-(--primary-color) whitespace-nowrap">
-            {t("LOGIN.CONTINUE_WITH")}
+            {t("REGISTER.CONTINUE_WITH")}
           </span>
           <Divider />
         </div>
