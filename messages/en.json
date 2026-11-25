@@ -40,6 +40,18 @@
     "ACCOUNT_QUESTION": "Already have an account?",
     "SIGN_IN": "Sign in"
   },
+  "RECOVER": {
+    "TITLE": "Reset password",
+    "SUBTITLE": "Please enter your new password below.",
+    "NEW_PASSWORD": "New Password",
+    "NEW_PASSWORD_PLACEHOLDER": "Enter new password",
+    "CONFIRM_NEW_PASSWORD": "Confirm",
+    "CONFIRM_NEW_PASSWORD_PLACEHOLDER": "Confirm new password",
+    "RESET_PASSWORD": "Reset password",
+    "ACCOUNT_QUESTION": "Remember your password?",
+    "SIGN_IN": "Sign in",
+    "PASSWORDS_MUST_MATCH": "Passwords must match"
+  },
   "TEXT_INPUT": {
     "SHOW": "Show password",
     "HIDE": "Hide password"

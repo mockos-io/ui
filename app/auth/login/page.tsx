@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,6 +18,7 @@ type LoginFormValues = {
 
 export default function Login() {
   const t = useTranslations();
+  const router = useRouter();
 
   const loginSchema = z.object({
     email: z.string().trim().min(1, t("COMMON.REQUIRED")),
@@ -26,7 +28,7 @@ export default function Login() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
@@ -64,6 +66,7 @@ export default function Login() {
           inputProps={register("email")}
           error={errors.email?.message}
           link={t("LOGIN.FORGOT_PASSWORD")}
+          onLinkClick={() => router.push("/auth/recover")}
         />
 
         <TextInput
@@ -75,7 +78,7 @@ export default function Login() {
           error={errors.password?.message}
         />
 
-        <Button type="submit">
+        <Button type="submit" disabled={!isValid}>
           {t("LOGIN.SIGN_IN")}
           <Image
             className="h-3 w-3"
