@@ -41,6 +41,15 @@
     "SIGN_IN": "Sign in"
   },
   "RECOVER": {
+    "TITLE": "Forgot password",
+    "SUBTITLE": "Enter your email to receive a password reset link.",
+    "EMAIL": "Work Email",
+    "EMAIL_PLACEHOLDER": "jane@company.com",
+    "SEND_LINK": "Send reset link",
+    "ACCOUNT_QUESTION": "Remember your password?",
+    "SIGN_IN": "Sign in"
+  },
+  "RECOVER_PASSWORD": {
     "TITLE": "Reset password",
     "SUBTITLE": "Please enter your new password below.",
     "NEW_PASSWORD": "New Password",
