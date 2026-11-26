@@ -61,11 +61,21 @@
     "SIGN_IN": "Sign in",
     "PASSWORDS_MUST_MATCH": "Passwords must match"
   },
-  "RECOVER_VERIFY": {
+  "VERIFY": {
     "TITLE": "Verify your email",
     "SUBTITLE": "We've sent a verification link to your email\naddress. Please check your inbox and click the link\nto continue setting up your workspace.",
     "ACCOUNT_QUESTION": "Didn't receive the email?",
     "RESEND": "Resend"
+  },
+  "VERIFY_SUCCESS": {
+    "TITLE": "Email verified",
+    "SUBTITLE": "Your Mockos account is now fully active and\nready to use.",
+    "CONTINUE": "Continue to Sign in"
+  },
+  "VERIFY_FAILED": {
+    "TITLE": "Verification failed",
+    "SUBTITLE": "We encountered an issue verifying your request.\nPlease try again or contact support for assistance.",
+    "BACK": "Back to Sign in"
   },
   "TEXT_INPUT": {
     "SHOW": "Show password",

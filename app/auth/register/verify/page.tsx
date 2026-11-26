@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-export default function RecoverPassword() {
+export default function Verify() {
   const t = useTranslations();
 
-  function resendRecoverEmail() {
+  function resendVerifyEmail() {
     //TODO: add logic
   }
 
@@ -21,20 +21,21 @@ export default function RecoverPassword() {
 
       <div className="w-full flex flex-col pb-10">
         <h1 className="text-[2rem] text-(--primary-color)">
-          {t("RECOVER_VERIFY.TITLE")}
+          {t("VERIFY.TITLE")}
         </h1>
         <p className="text-[1rem] text-(--primary-color)">
-          {t("RECOVER_VERIFY.SUBTITLE")}
+          {t("VERIFY.SUBTITLE")}
         </p>
       </div>
 
       <div className="w-full flex gap-2 text-[0.875rem] text-(--primary-color)  justify-center items-center">
-        <span>{t("RECOVER_VERIFY.ACCOUNT_QUESTION")}</span>
+        <span>{t("VERIFY.ACCOUNT_QUESTION")}</span>
         <Link
           className="text-(--link-color) hover:underline"
           href="/auth/login"
+          onClick={resendVerifyEmail}
         >
-          {t("RECOVER_VERIFY.RESEND")}
+          {t("VERIFY.RESEND")}
         </Link>
       </div>
     </div>
