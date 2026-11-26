@@ -16,7 +16,10 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -29,9 +32,8 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   BadRequestResponse,
@@ -42,56 +44,43 @@ import type {
   NotFoundResponse,
   Project,
   ProjectList,
-  UnauthorizedResponse,
-} from "./model";
+  UnauthorizedResponse
+} from './model';
 
-const getHeaders = (
-  ...sources: (
-    | RequestInit["headers"]
-    | Record<
-        string,
-        string | number | boolean | bigint | readonly string[] | undefined
-      >
-  )[]
-) => {
+import { fetcher } from '../lib/api-fetcher';
+
+
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | number | boolean | bigint | readonly string[] | undefined>)[]) => {
   const seen = new Set<string>();
   const layers: [string, string | readonly string[]][][] = [];
   for (const source of sources.reverse()) {
     if (!source) continue;
-    const entries =
-      source instanceof Headers
-        ? source.entries()
-        : Symbol.iterator in source
-          ? Array.from(
-              source as Iterable<Iterable<string>>,
-              (entry) => Array.from(entry) as [string, string],
-            )
-          : Object.entries<
-              string | number | boolean | bigint | readonly string[] | undefined
-            >(source);
+    const entries = source instanceof Headers
+      ? source.entries()
+      : Symbol.iterator in source
+        ? Array.from(source as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string])
+        : Object.entries<string | number | boolean | bigint | readonly string[] | undefined>(source);
     const layer: [string, string | readonly string[]][] = [];
     for (const [name, value] of entries) {
-      if (value !== undefined && !seen.has(name.toLowerCase()))
-        layer.push([name, typeof value === "object" ? value : String(value)]);
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, typeof value === 'object' ? value : String(value)]);
     }
     for (const [name] of layer) seen.add(name.toLowerCase());
     layers.push(layer);
   }
-  return Object.fromEntries(layers.reverse().flat()) as Extract<
-    RequestInit["headers"],
-    Record<string, unknown>
-  >;
+  return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
 };
 
-const withQueryKey = <T extends object, K>(
-  query: T,
-  queryKey: K,
-): T & { queryKey: K } => {
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -102,651 +91,454 @@ const withQueryKey = <T extends object, K>(
 };
 
 export type getProjectsResponse200 = {
-  data: ProjectList;
-  status: 200;
-};
+  data: ProjectList
+  status: 200
+}
 
 export type getProjectsResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type getProjectsResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
-export type getProjectsResponseSuccess = getProjectsResponse200 & {
+export type getProjectsResponseSuccess = (getProjectsResponse200) & {
   headers: Headers;
 };
-export type getProjectsResponseError = (
-  | getProjectsResponse400
-  | getProjectsResponse401
-) & {
+export type getProjectsResponseError = (getProjectsResponse400 | getProjectsResponse401) & {
   headers: Headers;
 };
 
-export type getProjectsResponse =
-  | getProjectsResponseSuccess
-  | getProjectsResponseError;
+export type getProjectsResponse = (getProjectsResponseSuccess | getProjectsResponseError)
 
-export const getGetProjectsUrl = (params?: GetProjectsParams) => {
+export const getGetProjectsUrl = (params?: GetProjectsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : String(value));
+      normalizedParams.append(key, value === null ? 'null' : String(value))
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/projects?${stringifiedParams}`
-    : `/projects`;
-};
+  return stringifiedParams.length > 0 ? `/projects?${stringifiedParams}` : `/projects`
+}
 
 /**
  * Returns the projects you are a verified member of, paginated.
  * @summary List your projects
  */
-export const getProjects = async (
-  params?: GetProjectsParams,
-  options?: RequestInit,
-): Promise<getProjectsResponse> => {
-  const res = await fetch(getGetProjectsUrl(params), {
+export const getProjects = async (params?: GetProjectsParams, options?: Parameters<typeof fetcher>[1]): Promise<getProjectsResponse> => {
+
+  return fetcher<getProjectsResponse>(getGetProjectsUrl(params),
+  {
     ...options,
-    method: "GET",
-  });
+    method: 'GET'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getProjectsResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as getProjectsResponse;
-};
+  }
+);}
 
-export const getGetProjectsQueryKey = (params?: GetProjectsParams) => {
-  return [`/projects`, ...(params ? [params] : [])] as const;
-};
 
-export const getGetProjectsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getProjects>>,
-  TError = BadRequestResponse | UnauthorizedResponse,
->(
-  params?: GetProjectsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>
-    >;
-    fetch?: RequestInit;
-  },
+
+
+
+export const getGetProjectsQueryKey = (params?: GetProjectsParams,) => {
+    return [
+    `/projects`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProjectsQueryOptions = <TData = Awaited<ReturnType<typeof getProjects>>, TError = BadRequestResponse | UnauthorizedResponse>(params?: GetProjectsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetProjectsQueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getProjects>>> = ({
-    signal,
-  }) => getProjects(params, { signal, ...fetchOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetProjectsQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getProjects>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type GetProjectsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getProjects>>
->;
-export type GetProjectsQueryError = BadRequestResponse | UnauthorizedResponse;
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProjects>>> = ({ signal }) => getProjects(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProjectsQueryResult = NonNullable<Awaited<ReturnType<typeof getProjects>>>
+export type GetProjectsQueryError = BadRequestResponse | UnauthorizedResponse
+
 
 /**
  * Returns the projects you are a verified member of, paginated.
  * @summary List your projects
  */
-export function useGetProjects<
-  TData = Awaited<ReturnType<typeof getProjects>>,
-  TError = BadRequestResponse | UnauthorizedResponse,
->(
-  params: undefined | GetProjectsParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>
-    > &
-      Pick<
+export function useGetProjects<TData = Awaited<ReturnType<typeof getProjects>>, TError = BadRequestResponse | UnauthorizedResponse>(
+ params: undefined |  GetProjectsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProjects>>,
           TError,
           Awaited<ReturnType<typeof getProjects>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the projects you are a verified member of, paginated.
  * @summary List your projects
  */
-export function useGetProjects<
-  TData = Awaited<ReturnType<typeof getProjects>>,
-  TError = BadRequestResponse | UnauthorizedResponse,
->(
-  params?: GetProjectsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>
-    > &
-      Pick<
+export function useGetProjects<TData = Awaited<ReturnType<typeof getProjects>>, TError = BadRequestResponse | UnauthorizedResponse>(
+ params?: GetProjectsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProjects>>,
           TError,
           Awaited<ReturnType<typeof getProjects>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the projects you are a verified member of, paginated.
  * @summary List your projects
  */
-export function useGetProjects<
-  TData = Awaited<ReturnType<typeof getProjects>>,
-  TError = BadRequestResponse | UnauthorizedResponse,
->(
-  params?: GetProjectsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetProjects<TData = Awaited<ReturnType<typeof getProjects>>, TError = BadRequestResponse | UnauthorizedResponse>(
+ params?: GetProjectsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the projects you are a verified member of, paginated.
  * @summary List your projects
  */
-export function useGetProjects<
-  TData = Awaited<ReturnType<typeof getProjects>>,
-  TError = BadRequestResponse | UnauthorizedResponse,
->(
-  params?: GetProjectsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetProjectsQueryOptions(params, options);
+export function useGetProjects<TData = Awaited<ReturnType<typeof getProjects>>, TError = BadRequestResponse | UnauthorizedResponse>(
+ params?: GetProjectsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjects>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetProjectsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+
+
+
+
+
 export type postProjectsResponse200 = {
-  data: Project;
-  status: 200;
-};
+  data: Project
+  status: 200
+}
 
 export type postProjectsResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type postProjectsResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
-export type postProjectsResponseSuccess = postProjectsResponse200 & {
+export type postProjectsResponseSuccess = (postProjectsResponse200) & {
   headers: Headers;
 };
-export type postProjectsResponseError = (
-  | postProjectsResponse400
-  | postProjectsResponse401
-) & {
+export type postProjectsResponseError = (postProjectsResponse400 | postProjectsResponse401) & {
   headers: Headers;
 };
 
-export type postProjectsResponse =
-  | postProjectsResponseSuccess
-  | postProjectsResponseError;
+export type postProjectsResponse = (postProjectsResponseSuccess | postProjectsResponseError)
 
 export const getPostProjectsUrl = () => {
-  return `/projects`;
-};
+
+
+
+
+  return `/projects`
+}
 
 /**
  * Creates a project and makes you its administrator.
  * @summary Create a project
  */
-export const postProjects = async (
-  createProjectRequest: CreateProjectRequest,
-  options?: RequestInit,
-): Promise<postProjectsResponse> => {
-  const res = await fetch(getPostProjectsUrl(), {
+export const postProjects = async (createProjectRequest: CreateProjectRequest, options?: Parameters<typeof fetcher>[1]): Promise<postProjectsResponse> => {
+
+  return fetcher<postProjectsResponse>(getPostProjectsUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(createProjectRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(createProjectRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postProjectsResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postProjectsResponse;
-};
 
-export const getPostProjectsMutationKey = () => ["postProjects"] as const;
 
-export const getPostProjectsMutationOptions = <
-  TError = BadRequestResponse | UnauthorizedResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postProjects>>,
-    TError,
-    PostProjectsMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postProjects>>,
-  TError,
-  PostProjectsMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostProjectsMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postProjects>>,
-    PostProjectsMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
+export const getPostProjectsMutationKey = () => ['postProjects'] as const;
 
-    return postProjects(data, fetchOptions);
-  };
+export const getPostProjectsMutationOptions = <TError = BadRequestResponse | UnauthorizedResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjects>>, TError,PostProjectsMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postProjects>>, TError,PostProjectsMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostProjectsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostProjectsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postProjects>>
->;
-export type PostProjectsMutationBody = CreateProjectRequest;
-export type PostProjectsMutationError =
-  | BadRequestResponse
-  | UnauthorizedResponse;
-export type PostProjectsMutationVariables = { data: CreateProjectRequest };
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postProjects>>, PostProjectsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postProjects(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostProjectsMutationResult = NonNullable<Awaited<ReturnType<typeof postProjects>>>
+    export type PostProjectsMutationBody = CreateProjectRequest
+    export type PostProjectsMutationError = BadRequestResponse | UnauthorizedResponse
+    export type PostProjectsMutationVariables = {data: CreateProjectRequest}
+
+    /**
  * Creates a project and makes you its administrator.
  * @summary Create a project
  */
-export const usePostProjects = <
-  TError = BadRequestResponse | UnauthorizedResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postProjects>>,
-      TError,
-      PostProjectsMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postProjects>>,
-  TError,
-  PostProjectsMutationVariables,
-  TContext
-> => {
-  return useMutation(getPostProjectsMutationOptions(options), queryClient);
-};
-export type putProjectsProjectIdResponse200 = {
-  data: Project;
-  status: 200;
-};
+export const usePostProjects = <TError = BadRequestResponse | UnauthorizedResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjects>>, TError,PostProjectsMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postProjects>>,
+        TError,
+        PostProjectsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostProjectsMutationOptions(options), queryClient);
+    }
+    export type putProjectsProjectIdResponse200 = {
+  data: Project
+  status: 200
+}
 
 export type putProjectsProjectIdResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type putProjectsProjectIdResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type putProjectsProjectIdResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
+  data: ForbiddenResponse
+  status: 403
+}
 
 export type putProjectsProjectIdResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type putProjectsProjectIdResponseSuccess =
-  putProjectsProjectIdResponse200 & {
-    headers: Headers;
-  };
-export type putProjectsProjectIdResponseError = (
-  | putProjectsProjectIdResponse400
-  | putProjectsProjectIdResponse401
-  | putProjectsProjectIdResponse403
-  | putProjectsProjectIdResponse404
-) & {
+export type putProjectsProjectIdResponseSuccess = (putProjectsProjectIdResponse200) & {
+  headers: Headers;
+};
+export type putProjectsProjectIdResponseError = (putProjectsProjectIdResponse400 | putProjectsProjectIdResponse401 | putProjectsProjectIdResponse403 | putProjectsProjectIdResponse404) & {
   headers: Headers;
 };
 
-export type putProjectsProjectIdResponse =
-  | putProjectsProjectIdResponseSuccess
-  | putProjectsProjectIdResponseError;
+export type putProjectsProjectIdResponse = (putProjectsProjectIdResponseSuccess | putProjectsProjectIdResponseError)
 
-export const getPutProjectsProjectIdUrl = (projectId: number) => {
-  return `/projects/${projectId}`;
-};
+export const getPutProjectsProjectIdUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}`
+}
 
 /**
  * Updates a project's details. Only administrators can do this.
  * @summary Update a project
  */
-export const putProjectsProjectId = async (
-  projectId: number,
-  createProjectRequest: CreateProjectRequest,
-  options?: RequestInit,
-): Promise<putProjectsProjectIdResponse> => {
-  const res = await fetch(getPutProjectsProjectIdUrl(projectId), {
+export const putProjectsProjectId = async (projectId: number,
+    createProjectRequest: CreateProjectRequest, options?: Parameters<typeof fetcher>[1]): Promise<putProjectsProjectIdResponse> => {
+
+  return fetcher<putProjectsProjectIdResponse>(getPutProjectsProjectIdUrl(projectId),
+  {
     ...options,
-    method: "PUT",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(createProjectRequest),
-  });
+    method: 'PUT',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(createProjectRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: putProjectsProjectIdResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as putProjectsProjectIdResponse;
-};
 
-export const getPutProjectsProjectIdMutationKey = () =>
-  ["putProjectsProjectId"] as const;
 
-export const getPutProjectsProjectIdMutationOptions = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putProjectsProjectId>>,
-    TError,
-    PutProjectsProjectIdMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putProjectsProjectId>>,
-  TError,
-  PutProjectsProjectIdMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPutProjectsProjectIdMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putProjectsProjectId>>,
-    PutProjectsProjectIdMutationVariables
-  > = (props) => {
-    const { projectId, data } = props ?? {};
+export const getPutProjectsProjectIdMutationKey = () => ['putProjectsProjectId'] as const;
 
-    return putProjectsProjectId(projectId, data, fetchOptions);
-  };
+export const getPutProjectsProjectIdMutationOptions = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectId>>, TError,PutProjectsProjectIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectId>>, TError,PutProjectsProjectIdMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPutProjectsProjectIdMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PutProjectsProjectIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putProjectsProjectId>>
->;
-export type PutProjectsProjectIdMutationBody = CreateProjectRequest;
-export type PutProjectsProjectIdMutationError =
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse;
-export type PutProjectsProjectIdMutationVariables = {
-  projectId: number;
-  data: CreateProjectRequest;
-};
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putProjectsProjectId>>, PutProjectsProjectIdMutationVariables> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  putProjectsProjectId(projectId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutProjectsProjectIdMutationResult = NonNullable<Awaited<ReturnType<typeof putProjectsProjectId>>>
+    export type PutProjectsProjectIdMutationBody = CreateProjectRequest
+    export type PutProjectsProjectIdMutationError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+    export type PutProjectsProjectIdMutationVariables = {projectId: number;data: CreateProjectRequest}
+
+    /**
  * Updates a project's details. Only administrators can do this.
  * @summary Update a project
  */
-export const usePutProjectsProjectId = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putProjectsProjectId>>,
-      TError,
-      PutProjectsProjectIdMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof putProjectsProjectId>>,
-  TError,
-  PutProjectsProjectIdMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPutProjectsProjectIdMutationOptions(options),
-    queryClient,
-  );
-};
-export type deleteProjectsProjectIdResponse200 = {
-  data: Message;
-  status: 200;
-};
+export const usePutProjectsProjectId = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectId>>, TError,PutProjectsProjectIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putProjectsProjectId>>,
+        TError,
+        PutProjectsProjectIdMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPutProjectsProjectIdMutationOptions(options), queryClient);
+    }
+    export type deleteProjectsProjectIdResponse200 = {
+  data: Message
+  status: 200
+}
 
 export type deleteProjectsProjectIdResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type deleteProjectsProjectIdResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type deleteProjectsProjectIdResponseSuccess =
-  deleteProjectsProjectIdResponse200 & {
-    headers: Headers;
-  };
-export type deleteProjectsProjectIdResponseError = (
-  | deleteProjectsProjectIdResponse401
-  | deleteProjectsProjectIdResponse404
-) & {
+export type deleteProjectsProjectIdResponseSuccess = (deleteProjectsProjectIdResponse200) & {
+  headers: Headers;
+};
+export type deleteProjectsProjectIdResponseError = (deleteProjectsProjectIdResponse401 | deleteProjectsProjectIdResponse404) & {
   headers: Headers;
 };
 
-export type deleteProjectsProjectIdResponse =
-  | deleteProjectsProjectIdResponseSuccess
-  | deleteProjectsProjectIdResponseError;
+export type deleteProjectsProjectIdResponse = (deleteProjectsProjectIdResponseSuccess | deleteProjectsProjectIdResponseError)
 
-export const getDeleteProjectsProjectIdUrl = (projectId: number) => {
-  return `/projects/${projectId}`;
-};
+export const getDeleteProjectsProjectIdUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}`
+}
 
 /**
  * Removes you from the project. If you are the last member, the project is deleted.
  * @summary Leave a project
  */
-export const deleteProjectsProjectId = async (
-  projectId: number,
-  options?: RequestInit,
-): Promise<deleteProjectsProjectIdResponse> => {
-  const res = await fetch(getDeleteProjectsProjectIdUrl(projectId), {
+export const deleteProjectsProjectId = async (projectId: number, options?: Parameters<typeof fetcher>[1]): Promise<deleteProjectsProjectIdResponse> => {
+
+  return fetcher<deleteProjectsProjectIdResponse>(getDeleteProjectsProjectIdUrl(projectId),
+  {
     ...options,
-    method: "DELETE",
-  });
+    method: 'DELETE'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: deleteProjectsProjectIdResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as deleteProjectsProjectIdResponse;
-};
+  }
+);}
 
-export const getDeleteProjectsProjectIdMutationKey = () =>
-  ["deleteProjectsProjectId"] as const;
 
-export const getDeleteProjectsProjectIdMutationOptions = <
-  TError = UnauthorizedResponse | NotFoundResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteProjectsProjectId>>,
-    TError,
-    DeleteProjectsProjectIdMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteProjectsProjectId>>,
-  TError,
-  DeleteProjectsProjectIdMutationVariables,
-  TContext
-> => {
-  const mutationKey = getDeleteProjectsProjectIdMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteProjectsProjectId>>,
-    DeleteProjectsProjectIdMutationVariables
-  > = (props) => {
-    const { projectId } = props ?? {};
 
-    return deleteProjectsProjectId(projectId, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getDeleteProjectsProjectIdMutationKey = () => ['deleteProjectsProjectId'] as const;
 
-export type DeleteProjectsProjectIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteProjectsProjectId>>
->;
+export const getDeleteProjectsProjectIdMutationOptions = <TError = UnauthorizedResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProjectsProjectId>>, TError,DeleteProjectsProjectIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProjectsProjectId>>, TError,DeleteProjectsProjectIdMutationVariables, TContext> => {
 
-export type DeleteProjectsProjectIdMutationError =
-  | UnauthorizedResponse
-  | NotFoundResponse;
-export type DeleteProjectsProjectIdMutationVariables = { projectId: number };
+const mutationKey = getDeleteProjectsProjectIdMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProjectsProjectId>>, DeleteProjectsProjectIdMutationVariables> = (props) => {
+          const {projectId} = props ?? {};
+
+          return  deleteProjectsProjectId(projectId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProjectsProjectIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProjectsProjectId>>>
+
+    export type DeleteProjectsProjectIdMutationError = UnauthorizedResponse | NotFoundResponse
+    export type DeleteProjectsProjectIdMutationVariables = {projectId: number}
+
+    /**
  * Removes you from the project. If you are the last member, the project is deleted.
  * @summary Leave a project
  */
-export const useDeleteProjectsProjectId = <
-  TError = UnauthorizedResponse | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteProjectsProjectId>>,
-      TError,
-      DeleteProjectsProjectIdMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteProjectsProjectId>>,
-  TError,
-  DeleteProjectsProjectIdMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getDeleteProjectsProjectIdMutationOptions(options),
-    queryClient,
-  );
-};
+export const useDeleteProjectsProjectId = <TError = UnauthorizedResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProjectsProjectId>>, TError,DeleteProjectsProjectIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProjectsProjectId>>,
+        TError,
+        DeleteProjectsProjectIdMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteProjectsProjectIdMutationOptions(options), queryClient);
+    }

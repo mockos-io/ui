@@ -16,7 +16,10 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -29,9 +32,8 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   AuthToken,
@@ -44,56 +46,43 @@ import type {
   Message,
   RegisterRequest,
   ResetRequest,
-  VerifyTokenRequest,
-} from "./model";
+  VerifyTokenRequest
+} from './model';
 
-const getHeaders = (
-  ...sources: (
-    | RequestInit["headers"]
-    | Record<
-        string,
-        string | number | boolean | bigint | readonly string[] | undefined
-      >
-  )[]
-) => {
+import { fetcher } from '../lib/api-fetcher';
+
+
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | number | boolean | bigint | readonly string[] | undefined>)[]) => {
   const seen = new Set<string>();
   const layers: [string, string | readonly string[]][][] = [];
   for (const source of sources.reverse()) {
     if (!source) continue;
-    const entries =
-      source instanceof Headers
-        ? source.entries()
-        : Symbol.iterator in source
-          ? Array.from(
-              source as Iterable<Iterable<string>>,
-              (entry) => Array.from(entry) as [string, string],
-            )
-          : Object.entries<
-              string | number | boolean | bigint | readonly string[] | undefined
-            >(source);
+    const entries = source instanceof Headers
+      ? source.entries()
+      : Symbol.iterator in source
+        ? Array.from(source as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string])
+        : Object.entries<string | number | boolean | bigint | readonly string[] | undefined>(source);
     const layer: [string, string | readonly string[]][] = [];
     for (const [name, value] of entries) {
-      if (value !== undefined && !seen.has(name.toLowerCase()))
-        layer.push([name, typeof value === "object" ? value : String(value)]);
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, typeof value === 'object' ? value : String(value)]);
     }
     for (const [name] of layer) seen.add(name.toLowerCase());
     layers.push(layer);
   }
-  return Object.fromEntries(layers.reverse().flat()) as Extract<
-    RequestInit["headers"],
-    Record<string, unknown>
-  >;
+  return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
 };
 
-const withQueryKey = <T extends object, K>(
-  query: T,
-  queryKey: K,
-): T & { queryKey: K } => {
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -104,1097 +93,810 @@ const withQueryKey = <T extends object, K>(
 };
 
 export type postAuthRegisterResponse200 = {
-  data: Message;
-  status: 200;
-};
+  data: Message
+  status: 200
+}
 
 export type postAuthRegisterResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
-export type postAuthRegisterResponseSuccess = postAuthRegisterResponse200 & {
+export type postAuthRegisterResponseSuccess = (postAuthRegisterResponse200) & {
   headers: Headers;
 };
-export type postAuthRegisterResponseError = postAuthRegisterResponse400 & {
+export type postAuthRegisterResponseError = (postAuthRegisterResponse400) & {
   headers: Headers;
 };
 
-export type postAuthRegisterResponse =
-  | postAuthRegisterResponseSuccess
-  | postAuthRegisterResponseError;
+export type postAuthRegisterResponse = (postAuthRegisterResponseSuccess | postAuthRegisterResponseError)
 
 export const getPostAuthRegisterUrl = () => {
-  return `/auth/register`;
-};
+
+
+
+
+  return `/auth/register`
+}
 
 /**
  * Creates an account and sends a verification email with a link to verify it.
  * @summary Create an account
  */
-export const postAuthRegister = async (
-  registerRequest: RegisterRequest,
-  options?: RequestInit,
-): Promise<postAuthRegisterResponse> => {
-  const res = await fetch(getPostAuthRegisterUrl(), {
+export const postAuthRegister = async (registerRequest: RegisterRequest, options?: Parameters<typeof fetcher>[1]): Promise<postAuthRegisterResponse> => {
+
+  return fetcher<postAuthRegisterResponse>(getPostAuthRegisterUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(registerRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(registerRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postAuthRegisterResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postAuthRegisterResponse;
-};
 
-export const getPostAuthRegisterMutationKey = () =>
-  ["postAuthRegister"] as const;
 
-export const getPostAuthRegisterMutationOptions = <
-  TError = BadRequestResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAuthRegister>>,
-    TError,
-    PostAuthRegisterMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAuthRegister>>,
-  TError,
-  PostAuthRegisterMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostAuthRegisterMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAuthRegister>>,
-    PostAuthRegisterMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
+export const getPostAuthRegisterMutationKey = () => ['postAuthRegister'] as const;
 
-    return postAuthRegister(data, fetchOptions);
-  };
+export const getPostAuthRegisterMutationOptions = <TError = BadRequestResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthRegister>>, TError,PostAuthRegisterMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAuthRegister>>, TError,PostAuthRegisterMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostAuthRegisterMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostAuthRegisterMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postAuthRegister>>
->;
-export type PostAuthRegisterMutationBody = RegisterRequest;
-export type PostAuthRegisterMutationError = BadRequestResponse;
-export type PostAuthRegisterMutationVariables = { data: RegisterRequest };
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAuthRegister>>, PostAuthRegisterMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAuthRegister(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAuthRegisterMutationResult = NonNullable<Awaited<ReturnType<typeof postAuthRegister>>>
+    export type PostAuthRegisterMutationBody = RegisterRequest
+    export type PostAuthRegisterMutationError = BadRequestResponse
+    export type PostAuthRegisterMutationVariables = {data: RegisterRequest}
+
+    /**
  * Creates an account and sends a verification email with a link to verify it.
  * @summary Create an account
  */
-export const usePostAuthRegister = <
-  TError = BadRequestResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAuthRegister>>,
-      TError,
-      PostAuthRegisterMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAuthRegister>>,
-  TError,
-  PostAuthRegisterMutationVariables,
-  TContext
-> => {
-  return useMutation(getPostAuthRegisterMutationOptions(options), queryClient);
-};
-export type postAuthSendVerifyResponse200 = {
-  data: Message;
-  status: 200;
-};
+export const usePostAuthRegister = <TError = BadRequestResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthRegister>>, TError,PostAuthRegisterMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAuthRegister>>,
+        TError,
+        PostAuthRegisterMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAuthRegisterMutationOptions(options), queryClient);
+    }
+    export type postAuthSendVerifyResponse200 = {
+  data: Message
+  status: 200
+}
 
 export type postAuthSendVerifyResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
-export type postAuthSendVerifyResponseSuccess =
-  postAuthSendVerifyResponse200 & {
-    headers: Headers;
-  };
-export type postAuthSendVerifyResponseError = postAuthSendVerifyResponse400 & {
+export type postAuthSendVerifyResponseSuccess = (postAuthSendVerifyResponse200) & {
+  headers: Headers;
+};
+export type postAuthSendVerifyResponseError = (postAuthSendVerifyResponse400) & {
   headers: Headers;
 };
 
-export type postAuthSendVerifyResponse =
-  | postAuthSendVerifyResponseSuccess
-  | postAuthSendVerifyResponseError;
+export type postAuthSendVerifyResponse = (postAuthSendVerifyResponseSuccess | postAuthSendVerifyResponseError)
 
 export const getPostAuthSendVerifyUrl = () => {
-  return `/auth/send-verify`;
-};
+
+
+
+
+  return `/auth/send-verify`
+}
 
 /**
  * Sends a new verification link to the given address, whether or not an account exists.
  * @summary Resend the verification email
  */
-export const postAuthSendVerify = async (
-  emailRequest: EmailRequest,
-  options?: RequestInit,
-): Promise<postAuthSendVerifyResponse> => {
-  const res = await fetch(getPostAuthSendVerifyUrl(), {
+export const postAuthSendVerify = async (emailRequest: EmailRequest, options?: Parameters<typeof fetcher>[1]): Promise<postAuthSendVerifyResponse> => {
+
+  return fetcher<postAuthSendVerifyResponse>(getPostAuthSendVerifyUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(emailRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(emailRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postAuthSendVerifyResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postAuthSendVerifyResponse;
-};
 
-export const getPostAuthSendVerifyMutationKey = () =>
-  ["postAuthSendVerify"] as const;
 
-export const getPostAuthSendVerifyMutationOptions = <
-  TError = BadRequestResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAuthSendVerify>>,
-    TError,
-    PostAuthSendVerifyMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAuthSendVerify>>,
-  TError,
-  PostAuthSendVerifyMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostAuthSendVerifyMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAuthSendVerify>>,
-    PostAuthSendVerifyMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
+export const getPostAuthSendVerifyMutationKey = () => ['postAuthSendVerify'] as const;
 
-    return postAuthSendVerify(data, fetchOptions);
-  };
+export const getPostAuthSendVerifyMutationOptions = <TError = BadRequestResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthSendVerify>>, TError,PostAuthSendVerifyMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAuthSendVerify>>, TError,PostAuthSendVerifyMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostAuthSendVerifyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostAuthSendVerifyMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postAuthSendVerify>>
->;
-export type PostAuthSendVerifyMutationBody = EmailRequest;
-export type PostAuthSendVerifyMutationError = BadRequestResponse;
-export type PostAuthSendVerifyMutationVariables = { data: EmailRequest };
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAuthSendVerify>>, PostAuthSendVerifyMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAuthSendVerify(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAuthSendVerifyMutationResult = NonNullable<Awaited<ReturnType<typeof postAuthSendVerify>>>
+    export type PostAuthSendVerifyMutationBody = EmailRequest
+    export type PostAuthSendVerifyMutationError = BadRequestResponse
+    export type PostAuthSendVerifyMutationVariables = {data: EmailRequest}
+
+    /**
  * Sends a new verification link to the given address, whether or not an account exists.
  * @summary Resend the verification email
  */
-export const usePostAuthSendVerify = <
-  TError = BadRequestResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAuthSendVerify>>,
-      TError,
-      PostAuthSendVerifyMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAuthSendVerify>>,
-  TError,
-  PostAuthSendVerifyMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPostAuthSendVerifyMutationOptions(options),
-    queryClient,
-  );
-};
-export type postAuthVerifyResponse200 = {
-  data: AuthToken;
-  status: 200;
-};
+export const usePostAuthSendVerify = <TError = BadRequestResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthSendVerify>>, TError,PostAuthSendVerifyMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAuthSendVerify>>,
+        TError,
+        PostAuthSendVerifyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAuthSendVerifyMutationOptions(options), queryClient);
+    }
+    export type postAuthVerifyResponse200 = {
+  data: AuthToken
+  status: 200
+}
 
 export type postAuthVerifyResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type postAuthVerifyResponse403 = {
-  data: Error;
-  status: 403;
-};
+  data: Error
+  status: 403
+}
 
-export type postAuthVerifyResponseSuccess = postAuthVerifyResponse200 & {
+export type postAuthVerifyResponseSuccess = (postAuthVerifyResponse200) & {
   headers: Headers;
 };
-export type postAuthVerifyResponseError = (
-  | postAuthVerifyResponse400
-  | postAuthVerifyResponse403
-) & {
+export type postAuthVerifyResponseError = (postAuthVerifyResponse400 | postAuthVerifyResponse403) & {
   headers: Headers;
 };
 
-export type postAuthVerifyResponse =
-  | postAuthVerifyResponseSuccess
-  | postAuthVerifyResponseError;
+export type postAuthVerifyResponse = (postAuthVerifyResponseSuccess | postAuthVerifyResponseError)
 
 export const getPostAuthVerifyUrl = () => {
-  return `/auth/verify`;
-};
+
+
+
+
+  return `/auth/verify`
+}
 
 /**
  * Verifies the account using the token from the verification email.
  * @summary Verify your email
  */
-export const postAuthVerify = async (
-  verifyTokenRequest: VerifyTokenRequest,
-  options?: RequestInit,
-): Promise<postAuthVerifyResponse> => {
-  const res = await fetch(getPostAuthVerifyUrl(), {
+export const postAuthVerify = async (verifyTokenRequest: VerifyTokenRequest, options?: Parameters<typeof fetcher>[1]): Promise<postAuthVerifyResponse> => {
+
+  return fetcher<postAuthVerifyResponse>(getPostAuthVerifyUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(verifyTokenRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(verifyTokenRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postAuthVerifyResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postAuthVerifyResponse;
-};
 
-export const getPostAuthVerifyMutationKey = () => ["postAuthVerify"] as const;
 
-export const getPostAuthVerifyMutationOptions = <
-  TError = BadRequestResponse | Error,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAuthVerify>>,
-    TError,
-    PostAuthVerifyMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAuthVerify>>,
-  TError,
-  PostAuthVerifyMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostAuthVerifyMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAuthVerify>>,
-    PostAuthVerifyMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
+export const getPostAuthVerifyMutationKey = () => ['postAuthVerify'] as const;
 
-    return postAuthVerify(data, fetchOptions);
-  };
+export const getPostAuthVerifyMutationOptions = <TError = BadRequestResponse | Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthVerify>>, TError,PostAuthVerifyMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAuthVerify>>, TError,PostAuthVerifyMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostAuthVerifyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostAuthVerifyMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postAuthVerify>>
->;
-export type PostAuthVerifyMutationBody = VerifyTokenRequest;
-export type PostAuthVerifyMutationError = BadRequestResponse | Error;
-export type PostAuthVerifyMutationVariables = { data: VerifyTokenRequest };
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAuthVerify>>, PostAuthVerifyMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAuthVerify(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAuthVerifyMutationResult = NonNullable<Awaited<ReturnType<typeof postAuthVerify>>>
+    export type PostAuthVerifyMutationBody = VerifyTokenRequest
+    export type PostAuthVerifyMutationError = BadRequestResponse | Error
+    export type PostAuthVerifyMutationVariables = {data: VerifyTokenRequest}
+
+    /**
  * Verifies the account using the token from the verification email.
  * @summary Verify your email
  */
-export const usePostAuthVerify = <
-  TError = BadRequestResponse | Error,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAuthVerify>>,
-      TError,
-      PostAuthVerifyMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAuthVerify>>,
-  TError,
-  PostAuthVerifyMutationVariables,
-  TContext
-> => {
-  return useMutation(getPostAuthVerifyMutationOptions(options), queryClient);
-};
-export type postAuthLoginResponse200 = {
-  data: AuthToken;
-  status: 200;
-};
+export const usePostAuthVerify = <TError = BadRequestResponse | Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthVerify>>, TError,PostAuthVerifyMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAuthVerify>>,
+        TError,
+        PostAuthVerifyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAuthVerifyMutationOptions(options), queryClient);
+    }
+    export type postAuthLoginResponse200 = {
+  data: AuthToken
+  status: 200
+}
 
 export type postAuthLoginResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type postAuthLoginResponse401 = {
-  data: Error;
-  status: 401;
-};
+  data: Error
+  status: 401
+}
 
 export type postAuthLoginResponse403 = {
-  data: Error;
-  status: 403;
-};
+  data: Error
+  status: 403
+}
 
-export type postAuthLoginResponseSuccess = postAuthLoginResponse200 & {
+export type postAuthLoginResponseSuccess = (postAuthLoginResponse200) & {
   headers: Headers;
 };
-export type postAuthLoginResponseError = (
-  | postAuthLoginResponse400
-  | postAuthLoginResponse401
-  | postAuthLoginResponse403
-) & {
+export type postAuthLoginResponseError = (postAuthLoginResponse400 | postAuthLoginResponse401 | postAuthLoginResponse403) & {
   headers: Headers;
 };
 
-export type postAuthLoginResponse =
-  | postAuthLoginResponseSuccess
-  | postAuthLoginResponseError;
+export type postAuthLoginResponse = (postAuthLoginResponseSuccess | postAuthLoginResponseError)
 
 export const getPostAuthLoginUrl = () => {
-  return `/auth/login`;
-};
+
+
+
+
+  return `/auth/login`
+}
 
 /**
  * Authenticates an existing, verified account.
  * @summary Log in
  */
-export const postAuthLogin = async (
-  loginRequest: LoginRequest,
-  options?: RequestInit,
-): Promise<postAuthLoginResponse> => {
-  const res = await fetch(getPostAuthLoginUrl(), {
+export const postAuthLogin = async (loginRequest: LoginRequest, options?: Parameters<typeof fetcher>[1]): Promise<postAuthLoginResponse> => {
+
+  return fetcher<postAuthLoginResponse>(getPostAuthLoginUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(loginRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(loginRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postAuthLoginResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postAuthLoginResponse;
-};
 
-export const getPostAuthLoginMutationKey = () => ["postAuthLogin"] as const;
 
-export const getPostAuthLoginMutationOptions = <
-  TError = BadRequestResponse | Error,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAuthLogin>>,
-    TError,
-    PostAuthLoginMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAuthLogin>>,
-  TError,
-  PostAuthLoginMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostAuthLoginMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAuthLogin>>,
-    PostAuthLoginMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
+export const getPostAuthLoginMutationKey = () => ['postAuthLogin'] as const;
 
-    return postAuthLogin(data, fetchOptions);
-  };
+export const getPostAuthLoginMutationOptions = <TError = BadRequestResponse | Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthLogin>>, TError,PostAuthLoginMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAuthLogin>>, TError,PostAuthLoginMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostAuthLoginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostAuthLoginMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postAuthLogin>>
->;
-export type PostAuthLoginMutationBody = LoginRequest;
-export type PostAuthLoginMutationError = BadRequestResponse | Error;
-export type PostAuthLoginMutationVariables = { data: LoginRequest };
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAuthLogin>>, PostAuthLoginMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAuthLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAuthLoginMutationResult = NonNullable<Awaited<ReturnType<typeof postAuthLogin>>>
+    export type PostAuthLoginMutationBody = LoginRequest
+    export type PostAuthLoginMutationError = BadRequestResponse | Error
+    export type PostAuthLoginMutationVariables = {data: LoginRequest}
+
+    /**
  * Authenticates an existing, verified account.
  * @summary Log in
  */
-export const usePostAuthLogin = <
-  TError = BadRequestResponse | Error,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAuthLogin>>,
-      TError,
-      PostAuthLoginMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAuthLogin>>,
-  TError,
-  PostAuthLoginMutationVariables,
-  TContext
-> => {
-  return useMutation(getPostAuthLoginMutationOptions(options), queryClient);
-};
-export type postAuthSendResetResponse200 = {
-  data: Message;
-  status: 200;
-};
+export const usePostAuthLogin = <TError = BadRequestResponse | Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthLogin>>, TError,PostAuthLoginMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAuthLogin>>,
+        TError,
+        PostAuthLoginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAuthLoginMutationOptions(options), queryClient);
+    }
+    export type postAuthSendResetResponse200 = {
+  data: Message
+  status: 200
+}
 
 export type postAuthSendResetResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
-export type postAuthSendResetResponseSuccess = postAuthSendResetResponse200 & {
+export type postAuthSendResetResponseSuccess = (postAuthSendResetResponse200) & {
   headers: Headers;
 };
-export type postAuthSendResetResponseError = postAuthSendResetResponse400 & {
+export type postAuthSendResetResponseError = (postAuthSendResetResponse400) & {
   headers: Headers;
 };
 
-export type postAuthSendResetResponse =
-  | postAuthSendResetResponseSuccess
-  | postAuthSendResetResponseError;
+export type postAuthSendResetResponse = (postAuthSendResetResponseSuccess | postAuthSendResetResponseError)
 
 export const getPostAuthSendResetUrl = () => {
-  return `/auth/send-reset`;
-};
+
+
+
+
+  return `/auth/send-reset`
+}
 
 /**
  * Sends a password reset link to the given address, whether or not an account exists.
  * @summary Request a password reset
  */
-export const postAuthSendReset = async (
-  emailRequest: EmailRequest,
-  options?: RequestInit,
-): Promise<postAuthSendResetResponse> => {
-  const res = await fetch(getPostAuthSendResetUrl(), {
+export const postAuthSendReset = async (emailRequest: EmailRequest, options?: Parameters<typeof fetcher>[1]): Promise<postAuthSendResetResponse> => {
+
+  return fetcher<postAuthSendResetResponse>(getPostAuthSendResetUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(emailRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(emailRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postAuthSendResetResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postAuthSendResetResponse;
-};
 
-export const getPostAuthSendResetMutationKey = () =>
-  ["postAuthSendReset"] as const;
 
-export const getPostAuthSendResetMutationOptions = <
-  TError = BadRequestResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAuthSendReset>>,
-    TError,
-    PostAuthSendResetMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAuthSendReset>>,
-  TError,
-  PostAuthSendResetMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostAuthSendResetMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAuthSendReset>>,
-    PostAuthSendResetMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
+export const getPostAuthSendResetMutationKey = () => ['postAuthSendReset'] as const;
 
-    return postAuthSendReset(data, fetchOptions);
-  };
+export const getPostAuthSendResetMutationOptions = <TError = BadRequestResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthSendReset>>, TError,PostAuthSendResetMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAuthSendReset>>, TError,PostAuthSendResetMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostAuthSendResetMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostAuthSendResetMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postAuthSendReset>>
->;
-export type PostAuthSendResetMutationBody = EmailRequest;
-export type PostAuthSendResetMutationError = BadRequestResponse;
-export type PostAuthSendResetMutationVariables = { data: EmailRequest };
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAuthSendReset>>, PostAuthSendResetMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAuthSendReset(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAuthSendResetMutationResult = NonNullable<Awaited<ReturnType<typeof postAuthSendReset>>>
+    export type PostAuthSendResetMutationBody = EmailRequest
+    export type PostAuthSendResetMutationError = BadRequestResponse
+    export type PostAuthSendResetMutationVariables = {data: EmailRequest}
+
+    /**
  * Sends a password reset link to the given address, whether or not an account exists.
  * @summary Request a password reset
  */
-export const usePostAuthSendReset = <
-  TError = BadRequestResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAuthSendReset>>,
-      TError,
-      PostAuthSendResetMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAuthSendReset>>,
-  TError,
-  PostAuthSendResetMutationVariables,
-  TContext
-> => {
-  return useMutation(getPostAuthSendResetMutationOptions(options), queryClient);
-};
-export type postAuthResetResponse200 = {
-  data: AuthToken;
-  status: 200;
-};
+export const usePostAuthSendReset = <TError = BadRequestResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthSendReset>>, TError,PostAuthSendResetMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAuthSendReset>>,
+        TError,
+        PostAuthSendResetMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAuthSendResetMutationOptions(options), queryClient);
+    }
+    export type postAuthResetResponse200 = {
+  data: AuthToken
+  status: 200
+}
 
 export type postAuthResetResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type postAuthResetResponse403 = {
-  data: Error;
-  status: 403;
-};
+  data: Error
+  status: 403
+}
 
-export type postAuthResetResponseSuccess = postAuthResetResponse200 & {
+export type postAuthResetResponseSuccess = (postAuthResetResponse200) & {
   headers: Headers;
 };
-export type postAuthResetResponseError = (
-  | postAuthResetResponse400
-  | postAuthResetResponse403
-) & {
+export type postAuthResetResponseError = (postAuthResetResponse400 | postAuthResetResponse403) & {
   headers: Headers;
 };
 
-export type postAuthResetResponse =
-  | postAuthResetResponseSuccess
-  | postAuthResetResponseError;
+export type postAuthResetResponse = (postAuthResetResponseSuccess | postAuthResetResponseError)
 
 export const getPostAuthResetUrl = () => {
-  return `/auth/reset`;
-};
+
+
+
+
+  return `/auth/reset`
+}
 
 /**
  * Sets a new password using the token from the reset email and returns an authenticated session.
  * @summary Reset your password
  */
-export const postAuthReset = async (
-  resetRequest: ResetRequest,
-  options?: RequestInit,
-): Promise<postAuthResetResponse> => {
-  const res = await fetch(getPostAuthResetUrl(), {
+export const postAuthReset = async (resetRequest: ResetRequest, options?: Parameters<typeof fetcher>[1]): Promise<postAuthResetResponse> => {
+
+  return fetcher<postAuthResetResponse>(getPostAuthResetUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(resetRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(resetRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postAuthResetResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postAuthResetResponse;
-};
 
-export const getPostAuthResetMutationKey = () => ["postAuthReset"] as const;
 
-export const getPostAuthResetMutationOptions = <
-  TError = BadRequestResponse | Error,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAuthReset>>,
-    TError,
-    PostAuthResetMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAuthReset>>,
-  TError,
-  PostAuthResetMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostAuthResetMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAuthReset>>,
-    PostAuthResetMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
+export const getPostAuthResetMutationKey = () => ['postAuthReset'] as const;
 
-    return postAuthReset(data, fetchOptions);
-  };
+export const getPostAuthResetMutationOptions = <TError = BadRequestResponse | Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthReset>>, TError,PostAuthResetMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAuthReset>>, TError,PostAuthResetMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostAuthResetMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostAuthResetMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postAuthReset>>
->;
-export type PostAuthResetMutationBody = ResetRequest;
-export type PostAuthResetMutationError = BadRequestResponse | Error;
-export type PostAuthResetMutationVariables = { data: ResetRequest };
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAuthReset>>, PostAuthResetMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAuthReset(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAuthResetMutationResult = NonNullable<Awaited<ReturnType<typeof postAuthReset>>>
+    export type PostAuthResetMutationBody = ResetRequest
+    export type PostAuthResetMutationError = BadRequestResponse | Error
+    export type PostAuthResetMutationVariables = {data: ResetRequest}
+
+    /**
  * Sets a new password using the token from the reset email and returns an authenticated session.
  * @summary Reset your password
  */
-export const usePostAuthReset = <
-  TError = BadRequestResponse | Error,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAuthReset>>,
-      TError,
-      PostAuthResetMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAuthReset>>,
-  TError,
-  PostAuthResetMutationVariables,
-  TContext
-> => {
-  return useMutation(getPostAuthResetMutationOptions(options), queryClient);
-};
-export type getAuthGloginResponse200 = {
-  data: GoogleLoginUrl;
-  status: 200;
-};
+export const usePostAuthReset = <TError = BadRequestResponse | Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthReset>>, TError,PostAuthResetMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAuthReset>>,
+        TError,
+        PostAuthResetMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAuthResetMutationOptions(options), queryClient);
+    }
+    export type getAuthGloginResponse200 = {
+  data: GoogleLoginUrl
+  status: 200
+}
 
-export type getAuthGloginResponseSuccess = getAuthGloginResponse200 & {
+export type getAuthGloginResponseSuccess = (getAuthGloginResponse200) & {
   headers: Headers;
 };
+;
 
-export type getAuthGloginResponse = getAuthGloginResponseSuccess;
+export type getAuthGloginResponse = (getAuthGloginResponseSuccess)
 
 export const getGetAuthGloginUrl = () => {
-  return `/auth/glogin`;
-};
+
+
+
+
+  return `/auth/glogin`
+}
 
 /**
  * Returns the Google authorization URL to redirect the user to.
  * @summary Start a Google login
  */
-export const getAuthGlogin = async (
-  options?: RequestInit,
-): Promise<getAuthGloginResponse> => {
-  const res = await fetch(getGetAuthGloginUrl(), {
+export const getAuthGlogin = async ( options?: Parameters<typeof fetcher>[1]): Promise<getAuthGloginResponse> => {
+
+  return fetcher<getAuthGloginResponse>(getGetAuthGloginUrl(),
+  {
     ...options,
-    method: "GET",
-  });
+    method: 'GET'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getAuthGloginResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as getAuthGloginResponse;
-};
+  }
+);}
+
+
+
+
 
 export const getGetAuthGloginQueryKey = () => {
-  return [`/auth/glogin`] as const;
-};
+    return [
+    `/auth/glogin`
+    ] as const;
+    }
 
-export const getGetAuthGloginQueryOptions = <
-  TData = Awaited<ReturnType<typeof getAuthGlogin>>,
-  TError = unknown,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>
-  >;
-  fetch?: RequestInit;
-}) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetAuthGloginQueryKey();
+export const getGetAuthGloginQueryOptions = <TData = Awaited<ReturnType<typeof getAuthGlogin>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuthGlogin>>> = ({
-    signal,
-  }) => getAuthGlogin({ signal, ...fetchOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getAuthGlogin>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  const queryKey =  queryOptions?.queryKey ?? getGetAuthGloginQueryKey();
 
-export type GetAuthGloginQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getAuthGlogin>>
->;
-export type GetAuthGloginQueryError = unknown;
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuthGlogin>>> = ({ signal }) => getAuthGlogin({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAuthGloginQueryResult = NonNullable<Awaited<ReturnType<typeof getAuthGlogin>>>
+export type GetAuthGloginQueryError = unknown
+
 
 /**
  * Returns the Google authorization URL to redirect the user to.
  * @summary Start a Google login
  */
-export function useGetAuthGlogin<
-  TData = Awaited<ReturnType<typeof getAuthGlogin>>,
-  TError = unknown,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>
-    > &
-      Pick<
+export function useGetAuthGlogin<TData = Awaited<ReturnType<typeof getAuthGlogin>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAuthGlogin>>,
           TError,
           Awaited<ReturnType<typeof getAuthGlogin>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the Google authorization URL to redirect the user to.
  * @summary Start a Google login
  */
-export function useGetAuthGlogin<
-  TData = Awaited<ReturnType<typeof getAuthGlogin>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>
-    > &
-      Pick<
+export function useGetAuthGlogin<TData = Awaited<ReturnType<typeof getAuthGlogin>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAuthGlogin>>,
           TError,
           Awaited<ReturnType<typeof getAuthGlogin>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the Google authorization URL to redirect the user to.
  * @summary Start a Google login
  */
-export function useGetAuthGlogin<
-  TData = Awaited<ReturnType<typeof getAuthGlogin>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetAuthGlogin<TData = Awaited<ReturnType<typeof getAuthGlogin>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the Google authorization URL to redirect the user to.
  * @summary Start a Google login
  */
-export function useGetAuthGlogin<
-  TData = Awaited<ReturnType<typeof getAuthGlogin>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetAuthGloginQueryOptions(options);
+export function useGetAuthGlogin<TData = Awaited<ReturnType<typeof getAuthGlogin>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAuthGlogin>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetAuthGloginQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+
+
+
+
+
 export type postAuthGloginResponse200 = {
-  data: AuthToken;
-  status: 200;
-};
+  data: AuthToken
+  status: 200
+}
 
 export type postAuthGloginResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type postAuthGloginResponse403 = {
-  data: Error;
-  status: 403;
-};
+  data: Error
+  status: 403
+}
 
-export type postAuthGloginResponseSuccess = postAuthGloginResponse200 & {
+export type postAuthGloginResponseSuccess = (postAuthGloginResponse200) & {
   headers: Headers;
 };
-export type postAuthGloginResponseError = (
-  | postAuthGloginResponse400
-  | postAuthGloginResponse403
-) & {
+export type postAuthGloginResponseError = (postAuthGloginResponse400 | postAuthGloginResponse403) & {
   headers: Headers;
 };
 
-export type postAuthGloginResponse =
-  | postAuthGloginResponseSuccess
-  | postAuthGloginResponseError;
+export type postAuthGloginResponse = (postAuthGloginResponseSuccess | postAuthGloginResponseError)
 
 export const getPostAuthGloginUrl = () => {
-  return `/auth/glogin`;
-};
+
+
+
+
+  return `/auth/glogin`
+}
 
 /**
  * Exchanges the Google authorization code for an authenticated session, creating the account if needed.
  * @summary Finish a Google login
  */
-export const postAuthGlogin = async (
-  googleLoginRequest: GoogleLoginRequest,
-  options?: RequestInit,
-): Promise<postAuthGloginResponse> => {
-  const res = await fetch(getPostAuthGloginUrl(), {
+export const postAuthGlogin = async (googleLoginRequest: GoogleLoginRequest, options?: Parameters<typeof fetcher>[1]): Promise<postAuthGloginResponse> => {
+
+  return fetcher<postAuthGloginResponse>(getPostAuthGloginUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(googleLoginRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(googleLoginRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postAuthGloginResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postAuthGloginResponse;
-};
 
-export const getPostAuthGloginMutationKey = () => ["postAuthGlogin"] as const;
 
-export const getPostAuthGloginMutationOptions = <
-  TError = BadRequestResponse | Error,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAuthGlogin>>,
-    TError,
-    PostAuthGloginMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAuthGlogin>>,
-  TError,
-  PostAuthGloginMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostAuthGloginMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAuthGlogin>>,
-    PostAuthGloginMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
+export const getPostAuthGloginMutationKey = () => ['postAuthGlogin'] as const;
 
-    return postAuthGlogin(data, fetchOptions);
-  };
+export const getPostAuthGloginMutationOptions = <TError = BadRequestResponse | Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthGlogin>>, TError,PostAuthGloginMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAuthGlogin>>, TError,PostAuthGloginMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostAuthGloginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostAuthGloginMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postAuthGlogin>>
->;
-export type PostAuthGloginMutationBody = GoogleLoginRequest;
-export type PostAuthGloginMutationError = BadRequestResponse | Error;
-export type PostAuthGloginMutationVariables = { data: GoogleLoginRequest };
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAuthGlogin>>, PostAuthGloginMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAuthGlogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAuthGloginMutationResult = NonNullable<Awaited<ReturnType<typeof postAuthGlogin>>>
+    export type PostAuthGloginMutationBody = GoogleLoginRequest
+    export type PostAuthGloginMutationError = BadRequestResponse | Error
+    export type PostAuthGloginMutationVariables = {data: GoogleLoginRequest}
+
+    /**
  * Exchanges the Google authorization code for an authenticated session, creating the account if needed.
  * @summary Finish a Google login
  */
-export const usePostAuthGlogin = <
-  TError = BadRequestResponse | Error,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAuthGlogin>>,
-      TError,
-      PostAuthGloginMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAuthGlogin>>,
-  TError,
-  PostAuthGloginMutationVariables,
-  TContext
-> => {
-  return useMutation(getPostAuthGloginMutationOptions(options), queryClient);
-};
+export const usePostAuthGlogin = <TError = BadRequestResponse | Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthGlogin>>, TError,PostAuthGloginMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAuthGlogin>>,
+        TError,
+        PostAuthGloginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAuthGloginMutationOptions(options), queryClient);
+    }

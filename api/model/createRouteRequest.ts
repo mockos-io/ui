@@ -16,9 +16,7 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { CreateEndpointRouteRequest } from "./createEndpointRouteRequest";
-import type { CreateFolderRequest } from "./createFolderRequest";
+import type { CreateEndpointRouteRequest } from './createEndpointRouteRequest';
+import type { CreateFolderRequest } from './createFolderRequest';
 
-export type CreateRouteRequest =
-  | CreateEndpointRouteRequest
-  | CreateFolderRequest;
+export type CreateRouteRequest = CreateEndpointRouteRequest | CreateFolderRequest;

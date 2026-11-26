@@ -16,7 +16,7 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { EditEndpointRouteRequest } from "./editEndpointRouteRequest";
-import type { EditFolderRequest } from "./editFolderRequest";
+import type { EditEndpointRouteRequest } from './editEndpointRouteRequest';
+import type { EditFolderRequest } from './editFolderRequest';
 
 export type EditRouteRequest = EditEndpointRouteRequest | EditFolderRequest;

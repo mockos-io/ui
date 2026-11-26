@@ -17,10 +17,10 @@
  * OpenAPI spec version: 3.0.0
  */
 
-export type DirectionParameter =
-  (typeof DirectionParameter)[keyof typeof DirectionParameter];
+export type DirectionParameter = typeof DirectionParameter[keyof typeof DirectionParameter];
+
 
 export const DirectionParameter = {
-  asc: "asc",
-  desc: "desc",
+  asc: 'asc',
+  desc: 'desc',
 } as const;

@@ -16,7 +16,10 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -29,9 +32,8 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   BadRequestResponse,
@@ -40,56 +42,43 @@ import type {
   ForbiddenResponse,
   NotFoundResponse,
   UnauthorizedResponse,
-  UpdateCustomCodeRequest,
-} from "./model";
+  UpdateCustomCodeRequest
+} from './model';
 
-const getHeaders = (
-  ...sources: (
-    | RequestInit["headers"]
-    | Record<
-        string,
-        string | number | boolean | bigint | readonly string[] | undefined
-      >
-  )[]
-) => {
+import { fetcher } from '../lib/api-fetcher';
+
+
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | number | boolean | bigint | readonly string[] | undefined>)[]) => {
   const seen = new Set<string>();
   const layers: [string, string | readonly string[]][][] = [];
   for (const source of sources.reverse()) {
     if (!source) continue;
-    const entries =
-      source instanceof Headers
-        ? source.entries()
-        : Symbol.iterator in source
-          ? Array.from(
-              source as Iterable<Iterable<string>>,
-              (entry) => Array.from(entry) as [string, string],
-            )
-          : Object.entries<
-              string | number | boolean | bigint | readonly string[] | undefined
-            >(source);
+    const entries = source instanceof Headers
+      ? source.entries()
+      : Symbol.iterator in source
+        ? Array.from(source as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string])
+        : Object.entries<string | number | boolean | bigint | readonly string[] | undefined>(source);
     const layer: [string, string | readonly string[]][] = [];
     for (const [name, value] of entries) {
-      if (value !== undefined && !seen.has(name.toLowerCase()))
-        layer.push([name, typeof value === "object" ? value : String(value)]);
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, typeof value === 'object' ? value : String(value)]);
     }
     for (const [name] of layer) seen.add(name.toLowerCase());
     layers.push(layer);
   }
-  return Object.fromEntries(layers.reverse().flat()) as Extract<
-    RequestInit["headers"],
-    Record<string, unknown>
-  >;
+  return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
 };
 
-const withQueryKey = <T extends object, K>(
-  query: T,
-  queryKey: K,
-): T & { queryKey: K } => {
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -99,400 +88,202 @@ const withQueryKey = <T extends object, K>(
   return result;
 };
 
-export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse200 =
-  {
-    data: CustomCode;
-    status: 200;
-  };
+export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse200 = {
+  data: CustomCode
+  status: 200
+}
 
-export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse401 =
-  {
-    data: UnauthorizedResponse;
-    status: 401;
-  };
+export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse401 = {
+  data: UnauthorizedResponse
+  status: 401
+}
 
-export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse404 =
-  {
-    data: Error;
-    status: 404;
-  };
+export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse404 = {
+  data: Error
+  status: 404
+}
 
-export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseSuccess =
-  getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse200 & {
-    headers: Headers;
-  };
-export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseError =
-  (
-    | getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse401
-    | getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse404
-  ) & {
-    headers: Headers;
-  };
-
-export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse =
-  | getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseSuccess
-  | getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseError;
-
-export const getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeUrl = (
-  projectId: number,
-  routeId: number,
-  responseId: number,
-) => {
-  return `/projects/${projectId}/routes/${routeId}/responses/${responseId}/code`;
+export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseSuccess = (getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse200) & {
+  headers: Headers;
+};
+export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseError = (getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse401 | getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse404) & {
+  headers: Headers;
 };
 
-/**
- * Returns the custom code attached to a response.
- * @summary Get a response's custom code
- */
-export const getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode = async (
-  projectId: number,
-  routeId: number,
-  responseId: number,
-  options?: RequestInit,
-): Promise<getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse> => {
-  const res = await fetch(
-    getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeUrl(
-      projectId,
-      routeId,
-      responseId,
-    ),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
+export type getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse = (getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseSuccess | getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseError)
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse["data"] =
-    body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse;
-};
-
-export const getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryKey =
-  (projectId: number, routeId: number, responseId: number) => {
-    return [
-      `/projects/${projectId}/routes/${routeId}/responses/${responseId}/code`,
-    ] as const;
-  };
-
-export const getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryOptions =
-  <
-    TData = Awaited<
-      ReturnType<
-        typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-      >
-    >,
-    TError = UnauthorizedResponse | Error,
-  >(
-    projectId: number,
+export const getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeUrl = (projectId: number,
     routeId: number,
-    responseId: number,
-    options?: {
-      query?: Partial<
-        UseQueryOptions<
-          Awaited<
-            ReturnType<
-              typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-            >
-          >,
-          TError,
-          TData
-        >
-      >;
-      fetch?: RequestInit;
-    },
-  ) => {
-    const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+    responseId: number,) => {
 
-    const queryKey =
-      queryOptions?.queryKey ??
-      getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryKey(
-        projectId,
-        routeId,
-        responseId,
-      );
 
-    const queryFn: QueryFunction<
-      Awaited<
-        ReturnType<
-          typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-        >
-      >
-    > = ({ signal }) =>
-      getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode(
-        projectId,
-        routeId,
-        responseId,
-        { signal, ...fetchOptions },
-      );
 
-    return {
-      queryKey,
-      queryFn,
-      enabled:
-        projectId !== null &&
-        projectId !== undefined &&
-        routeId !== null &&
-        routeId !== undefined &&
-        responseId !== null &&
-        responseId !== undefined,
-      ...queryOptions,
-    } as UseQueryOptions<
-      Awaited<
-        ReturnType<
-          typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-        >
-      >,
-      TError,
-      TData
-    > & { queryKey: DataTag<QueryKey, TData, TError> };
-  };
 
-export type GetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryResult =
-  NonNullable<
-    Awaited<
-      ReturnType<
-        typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-      >
-    >
-  >;
-export type GetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryError =
-  | UnauthorizedResponse
-  | Error;
+  return `/projects/${projectId}/routes/${routeId}/responses/${responseId}/code`
+}
 
 /**
  * Returns the custom code attached to a response.
  * @summary Get a response's custom code
  */
-export function useGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCode<
-  TData = Awaited<
-    ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>
-  >,
-  TError = UnauthorizedResponse | Error,
->(
-  projectId: number,
-  routeId: number,
-  responseId: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<
-          ReturnType<
-            typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-          >
-        >,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export const getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode = async (projectId: number,
+    routeId: number,
+    responseId: number, options?: Parameters<typeof fetcher>[1]): Promise<getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse> => {
+
+  return fetcher<getProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse>(getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeUrl(projectId,routeId,responseId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryKey = (projectId: number,
+    routeId: number,
+    responseId: number,) => {
+    return [
+    `/projects/${projectId}/routes/${routeId}/responses/${responseId}/code`
+    ] as const;
+    }
+
+
+export const getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryOptions = <TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError = UnauthorizedResponse | Error>(projectId: number,
+    routeId: number,
+    responseId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryKey(projectId,routeId,responseId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>> = ({ signal }) => getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode(projectId,routeId,responseId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined && routeId !== null && routeId !== undefined && responseId !== null && responseId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryResult = NonNullable<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>>
+export type GetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryError = UnauthorizedResponse | Error
+
+
+/**
+ * Returns the custom code attached to a response.
+ * @summary Get a response's custom code
+ */
+export function useGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCode<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError = UnauthorizedResponse | Error>(
+ projectId: number,
+    routeId: number,
+    responseId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<
-            ReturnType<
-              typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-            >
-          >,
+          Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>,
           TError,
-          Awaited<
-            ReturnType<
-              typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-            >
-          >
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+          Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the custom code attached to a response.
  * @summary Get a response's custom code
  */
-export function useGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCode<
-  TData = Awaited<
-    ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>
-  >,
-  TError = UnauthorizedResponse | Error,
->(
-  projectId: number,
-  routeId: number,
-  responseId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<
-          ReturnType<
-            typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-          >
-        >,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export function useGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCode<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError = UnauthorizedResponse | Error>(
+ projectId: number,
+    routeId: number,
+    responseId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<
-            ReturnType<
-              typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-            >
-          >,
+          Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>,
           TError,
-          Awaited<
-            ReturnType<
-              typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-            >
-          >
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+          Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the custom code attached to a response.
  * @summary Get a response's custom code
  */
-export function useGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCode<
-  TData = Awaited<
-    ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>
-  >,
-  TError = UnauthorizedResponse | Error,
->(
-  projectId: number,
-  routeId: number,
-  responseId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<
-          ReturnType<
-            typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-          >
-        >,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCode<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError = UnauthorizedResponse | Error>(
+ projectId: number,
+    routeId: number,
+    responseId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the custom code attached to a response.
  * @summary Get a response's custom code
  */
-export function useGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCode<
-  TData = Awaited<
-    ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>
-  >,
-  TError = UnauthorizedResponse | Error,
->(
-  projectId: number,
-  routeId: number,
-  responseId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<
-          ReturnType<
-            typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-          >
-        >,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions =
-    getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryOptions(
-      projectId,
-      routeId,
-      responseId,
-      options,
-    );
+export function useGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCode<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError = UnauthorizedResponse | Error>(
+ projectId: number,
+    routeId: number,
+    responseId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeQueryOptions(projectId,routeId,responseId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse200 =
-  {
-    data: CustomCode;
-    status: 200;
-  };
 
-export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse400 =
-  {
-    data: BadRequestResponse;
-    status: 400;
-  };
 
-export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse401 =
-  {
-    data: UnauthorizedResponse;
-    status: 401;
-  };
 
-export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse403 =
-  {
-    data: ForbiddenResponse;
-    status: 403;
-  };
 
-export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse404 =
-  {
-    data: NotFoundResponse;
-    status: 404;
-  };
 
-export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseSuccess =
-  putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse200 & {
-    headers: Headers;
-  };
-export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseError =
-  (
-    | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse400
-    | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse401
-    | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse403
-    | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse404
-  ) & {
-    headers: Headers;
-  };
+export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse200 = {
+  data: CustomCode
+  status: 200
+}
 
-export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse =
-  | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseSuccess
-  | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseError;
+export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse400 = {
+  data: BadRequestResponse
+  status: 400
+}
 
-export const getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeUrl = (
-  projectId: number,
-  routeId: number,
-  responseId: number,
-) => {
-  return `/projects/${projectId}/routes/${routeId}/responses/${responseId}/code`;
+export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse401 = {
+  data: UnauthorizedResponse
+  status: 401
+}
+
+export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse403 = {
+  data: ForbiddenResponse
+  status: 403
+}
+
+export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
+export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseSuccess = (putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse200) & {
+  headers: Headers;
 };
+export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseError = (putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse400 | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse401 | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse403 | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse404) & {
+  headers: Headers;
+};
+
+export type putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse = (putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseSuccess | putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponseError)
+
+export const getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeUrl = (projectId: number,
+    routeId: number,
+    responseId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/routes/${routeId}/responses/${responseId}/code`
+}
 
 /**
  * Attaches or updates custom code for a response. Only editors and
@@ -503,130 +294,59 @@ export const getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeUrl = (
  * headers. The value it returns is sent as the response body.
  * @summary Set a response's custom code
  */
-export const putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode = async (
-  projectId: number,
-  routeId: number,
-  responseId: number,
-  updateCustomCodeRequest: UpdateCustomCodeRequest,
-  options?: RequestInit,
-): Promise<putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse> => {
-  const res = await fetch(
-    getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeUrl(
-      projectId,
-      routeId,
-      responseId,
-    ),
-    {
-      ...options,
-      method: "PUT",
-      headers: getHeaders(
-        { "Content-Type": "application/json" },
-        options?.headers,
-      ),
-      body: JSON.stringify(updateCustomCodeRequest),
-    },
-  );
+export const putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode = async (projectId: number,
+    routeId: number,
+    responseId: number,
+    updateCustomCodeRequest: UpdateCustomCodeRequest, options?: Parameters<typeof fetcher>[1]): Promise<putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse> => {
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse["data"] =
-    body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse;
-};
-
-export const getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationKey =
-  () => ["putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode"] as const;
-
-export const getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationOptions =
-  <
-    TError =
-      | BadRequestResponse
-      | UnauthorizedResponse
-      | ForbiddenResponse
-      | NotFoundResponse,
-    TContext = unknown,
-  >(options?: {
-    mutation?: UseMutationOptions<
-      Awaited<
-        ReturnType<
-          typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-        >
-      >,
-      TError,
-      PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  }): UseMutationOptions<
-    Awaited<
-      ReturnType<
-        typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-      >
-    >,
-    TError,
-    PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables,
-    TContext
-  > => {
-    const mutationKey =
-      getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationKey();
-    const { mutation: mutationOptions, fetch: fetchOptions } = options
-      ? options.mutation &&
-        "mutationKey" in options.mutation &&
-        options.mutation.mutationKey
-        ? options
-        : { ...options, mutation: { ...options.mutation, mutationKey } }
-      : { mutation: { mutationKey }, fetch: undefined };
-
-    const mutationFn: MutationFunction<
-      Awaited<
-        ReturnType<
-          typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-        >
-      >,
-      PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables
-    > = (props) => {
-      const { projectId, routeId, responseId, data } = props ?? {};
-
-      return putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode(
-        projectId,
-        routeId,
-        responseId,
-        data,
-        fetchOptions,
-      );
-    };
-
-    return { mutationFn, ...mutationOptions };
-  };
-
-export type PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationResult =
-  NonNullable<
-    Awaited<
-      ReturnType<
-        typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-      >
-    >
-  >;
-export type PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationBody =
-  UpdateCustomCodeRequest;
-export type PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationError =
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse;
-export type PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables =
+  return fetcher<putProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeResponse>(getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeUrl(projectId,routeId,responseId),
   {
-    projectId: number;
-    routeId: number;
-    responseId: number;
-    data: UpdateCustomCodeRequest;
-  };
+    ...options,
+    method: 'PUT',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(updateCustomCodeRequest)
+  }
+);}
 
-/**
+
+
+
+
+export const getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationKey = () => ['putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode'] as const;
+
+export const getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationOptions = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError,PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError,PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables, TContext> => {
+
+const mutationKey = getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables> = (props) => {
+          const {projectId,routeId,responseId,data} = props ?? {};
+
+          return  putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode(projectId,routeId,responseId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationResult = NonNullable<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>>
+    export type PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationBody = UpdateCustomCodeRequest
+    export type PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+    export type PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables = {projectId: number;routeId: number;responseId: number;data: UpdateCustomCodeRequest}
+
+    /**
  * Attaches or updates custom code for a response. Only editors and
  * administrators can do this.
  *
@@ -635,40 +355,13 @@ export type PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVari
  * headers. The value it returns is sent as the response body.
  * @summary Set a response's custom code
  */
-export const usePutProjectsProjectIdRoutesRouteIdResponsesResponseIdCode = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<
-        ReturnType<
-          typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode
-        >
-      >,
-      TError,
-      PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<
-    ReturnType<typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>
-  >,
-  TError,
-  PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationOptions(
-      options,
-    ),
-    queryClient,
-  );
-};
+export const usePutProjectsProjectIdRoutesRouteIdResponsesResponseIdCode = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>, TError,PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteIdResponsesResponseIdCode>>,
+        TError,
+        PutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPutProjectsProjectIdRoutesRouteIdResponsesResponseIdCodeMutationOptions(options), queryClient);
+    }

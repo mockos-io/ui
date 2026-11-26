@@ -16,7 +16,10 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -29,9 +32,8 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   BadRequestResponse,
@@ -43,56 +45,43 @@ import type {
   MemberList,
   Message,
   NotFoundResponse,
-  UnauthorizedResponse,
-} from "./model";
+  UnauthorizedResponse
+} from './model';
 
-const getHeaders = (
-  ...sources: (
-    | RequestInit["headers"]
-    | Record<
-        string,
-        string | number | boolean | bigint | readonly string[] | undefined
-      >
-  )[]
-) => {
+import { fetcher } from '../lib/api-fetcher';
+
+
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | number | boolean | bigint | readonly string[] | undefined>)[]) => {
   const seen = new Set<string>();
   const layers: [string, string | readonly string[]][][] = [];
   for (const source of sources.reverse()) {
     if (!source) continue;
-    const entries =
-      source instanceof Headers
-        ? source.entries()
-        : Symbol.iterator in source
-          ? Array.from(
-              source as Iterable<Iterable<string>>,
-              (entry) => Array.from(entry) as [string, string],
-            )
-          : Object.entries<
-              string | number | boolean | bigint | readonly string[] | undefined
-            >(source);
+    const entries = source instanceof Headers
+      ? source.entries()
+      : Symbol.iterator in source
+        ? Array.from(source as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string])
+        : Object.entries<string | number | boolean | bigint | readonly string[] | undefined>(source);
     const layer: [string, string | readonly string[]][] = [];
     for (const [name, value] of entries) {
-      if (value !== undefined && !seen.has(name.toLowerCase()))
-        layer.push([name, typeof value === "object" ? value : String(value)]);
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, typeof value === 'object' ? value : String(value)]);
     }
     for (const [name] of layer) seen.add(name.toLowerCase());
     layers.push(layer);
   }
-  return Object.fromEntries(layers.reverse().flat()) as Extract<
-    RequestInit["headers"],
-    Record<string, unknown>
-  >;
+  return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
 };
 
-const withQueryKey = <T extends object, K>(
-  query: T,
-  queryKey: K,
-): T & { queryKey: K } => {
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -103,780 +92,487 @@ const withQueryKey = <T extends object, K>(
 };
 
 export type getProjectsProjectIdMembersResponse200 = {
-  data: MemberList;
-  status: 200;
-};
+  data: MemberList
+  status: 200
+}
 
 export type getProjectsProjectIdMembersResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type getProjectsProjectIdMembersResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type getProjectsProjectIdMembersResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type getProjectsProjectIdMembersResponseSuccess =
-  getProjectsProjectIdMembersResponse200 & {
-    headers: Headers;
-  };
-export type getProjectsProjectIdMembersResponseError = (
-  | getProjectsProjectIdMembersResponse400
-  | getProjectsProjectIdMembersResponse401
-  | getProjectsProjectIdMembersResponse404
-) & {
+export type getProjectsProjectIdMembersResponseSuccess = (getProjectsProjectIdMembersResponse200) & {
+  headers: Headers;
+};
+export type getProjectsProjectIdMembersResponseError = (getProjectsProjectIdMembersResponse400 | getProjectsProjectIdMembersResponse401 | getProjectsProjectIdMembersResponse404) & {
   headers: Headers;
 };
 
-export type getProjectsProjectIdMembersResponse =
-  | getProjectsProjectIdMembersResponseSuccess
-  | getProjectsProjectIdMembersResponseError;
+export type getProjectsProjectIdMembersResponse = (getProjectsProjectIdMembersResponseSuccess | getProjectsProjectIdMembersResponseError)
 
-export const getGetProjectsProjectIdMembersUrl = (
-  projectId: number,
-  params?: GetProjectsProjectIdMembersParams,
-) => {
+export const getGetProjectsProjectIdMembersUrl = (projectId: number,
+    params?: GetProjectsProjectIdMembersParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : String(value));
+      normalizedParams.append(key, value === null ? 'null' : String(value))
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/projects/${projectId}/members?${stringifiedParams}`
-    : `/projects/${projectId}/members`;
-};
+  return stringifiedParams.length > 0 ? `/projects/${projectId}/members?${stringifiedParams}` : `/projects/${projectId}/members`
+}
 
 /**
  * Returns the members of a project, paginated and searchable by name.
  * @summary List project members
  */
-export const getProjectsProjectIdMembers = async (
-  projectId: number,
-  params?: GetProjectsProjectIdMembersParams,
-  options?: RequestInit,
-): Promise<getProjectsProjectIdMembersResponse> => {
-  const res = await fetch(
-    getGetProjectsProjectIdMembersUrl(projectId, params),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
+export const getProjectsProjectIdMembers = async (projectId: number,
+    params?: GetProjectsProjectIdMembersParams, options?: Parameters<typeof fetcher>[1]): Promise<getProjectsProjectIdMembersResponse> => {
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  return fetcher<getProjectsProjectIdMembersResponse>(getGetProjectsProjectIdMembersUrl(projectId,params),
+  {
+    ...options,
+    method: 'GET'
 
-  const data: getProjectsProjectIdMembersResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as getProjectsProjectIdMembersResponse;
-};
 
-export const getGetProjectsProjectIdMembersQueryKey = (
-  projectId: number,
-  params?: GetProjectsProjectIdMembersParams,
+  }
+);}
+
+
+
+
+
+export const getGetProjectsProjectIdMembersQueryKey = (projectId: number,
+    params?: GetProjectsProjectIdMembersParams,) => {
+    return [
+    `/projects/${projectId}/members`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProjectsProjectIdMembersQueryOptions = <TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse>(projectId: number,
+    params?: GetProjectsProjectIdMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
 ) => {
-  return [
-    `/projects/${projectId}/members`,
-    ...(params ? [params] : []),
-  ] as const;
-};
 
-export const getGetProjectsProjectIdMembersQueryOptions = <
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-  TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  params?: GetProjectsProjectIdMembersParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ??
-    getGetProjectsProjectIdMembersQueryKey(projectId, params);
+  const queryKey =  queryOptions?.queryKey ?? getGetProjectsProjectIdMembersQueryKey(projectId,params);
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getProjectsProjectIdMembers>>
-  > = ({ signal }) =>
-    getProjectsProjectIdMembers(projectId, params, { signal, ...fetchOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: projectId !== null && projectId !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type GetProjectsProjectIdMembersQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getProjectsProjectIdMembers>>
->;
-export type GetProjectsProjectIdMembersQueryError =
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | NotFoundResponse;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProjectsProjectIdMembers>>> = ({ signal }) => getProjectsProjectIdMembers(projectId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProjectsProjectIdMembersQueryResult = NonNullable<Awaited<ReturnType<typeof getProjectsProjectIdMembers>>>
+export type GetProjectsProjectIdMembersQueryError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+
 
 /**
  * Returns the members of a project, paginated and searchable by name.
  * @summary List project members
  */
-export function useGetProjectsProjectIdMembers<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-  TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  params: undefined | GetProjectsProjectIdMembersParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export function useGetProjectsProjectIdMembers<TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse>(
+ projectId: number,
+    params: undefined |  GetProjectsProjectIdMembersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
           TError,
           Awaited<ReturnType<typeof getProjectsProjectIdMembers>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the members of a project, paginated and searchable by name.
  * @summary List project members
  */
-export function useGetProjectsProjectIdMembers<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-  TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  params?: GetProjectsProjectIdMembersParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export function useGetProjectsProjectIdMembers<TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse>(
+ projectId: number,
+    params?: GetProjectsProjectIdMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
           TError,
           Awaited<ReturnType<typeof getProjectsProjectIdMembers>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the members of a project, paginated and searchable by name.
  * @summary List project members
  */
-export function useGetProjectsProjectIdMembers<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-  TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  params?: GetProjectsProjectIdMembersParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetProjectsProjectIdMembers<TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse>(
+ projectId: number,
+    params?: GetProjectsProjectIdMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the members of a project, paginated and searchable by name.
  * @summary List project members
  */
-export function useGetProjectsProjectIdMembers<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-  TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  params?: GetProjectsProjectIdMembersParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdMembers>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetProjectsProjectIdMembersQueryOptions(
-    projectId,
-    params,
-    options,
-  );
+export function useGetProjectsProjectIdMembers<TData = Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse>(
+ projectId: number,
+    params?: GetProjectsProjectIdMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdMembers>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetProjectsProjectIdMembersQueryOptions(projectId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+
+
+
+
+
 export type postProjectsProjectIdMembersResponse200 = {
-  data: Member;
-  status: 200;
-};
+  data: Member
+  status: 200
+}
 
 export type postProjectsProjectIdMembersResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type postProjectsProjectIdMembersResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type postProjectsProjectIdMembersResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
+  data: ForbiddenResponse
+  status: 403
+}
 
 export type postProjectsProjectIdMembersResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type postProjectsProjectIdMembersResponseSuccess =
-  postProjectsProjectIdMembersResponse200 & {
-    headers: Headers;
-  };
-export type postProjectsProjectIdMembersResponseError = (
-  | postProjectsProjectIdMembersResponse400
-  | postProjectsProjectIdMembersResponse401
-  | postProjectsProjectIdMembersResponse403
-  | postProjectsProjectIdMembersResponse404
-) & {
+export type postProjectsProjectIdMembersResponseSuccess = (postProjectsProjectIdMembersResponse200) & {
+  headers: Headers;
+};
+export type postProjectsProjectIdMembersResponseError = (postProjectsProjectIdMembersResponse400 | postProjectsProjectIdMembersResponse401 | postProjectsProjectIdMembersResponse403 | postProjectsProjectIdMembersResponse404) & {
   headers: Headers;
 };
 
-export type postProjectsProjectIdMembersResponse =
-  | postProjectsProjectIdMembersResponseSuccess
-  | postProjectsProjectIdMembersResponseError;
+export type postProjectsProjectIdMembersResponse = (postProjectsProjectIdMembersResponseSuccess | postProjectsProjectIdMembersResponseError)
 
-export const getPostProjectsProjectIdMembersUrl = (projectId: number) => {
-  return `/projects/${projectId}/members`;
-};
+export const getPostProjectsProjectIdMembersUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/members`
+}
 
 /**
  * Invites an existing verified user to the project with the given role. Only administrators can do this.
  * @summary Invite a member
  */
-export const postProjectsProjectIdMembers = async (
-  projectId: number,
-  inviteMemberRequest: InviteMemberRequest,
-  options?: RequestInit,
-): Promise<postProjectsProjectIdMembersResponse> => {
-  const res = await fetch(getPostProjectsProjectIdMembersUrl(projectId), {
+export const postProjectsProjectIdMembers = async (projectId: number,
+    inviteMemberRequest: InviteMemberRequest, options?: Parameters<typeof fetcher>[1]): Promise<postProjectsProjectIdMembersResponse> => {
+
+  return fetcher<postProjectsProjectIdMembersResponse>(getPostProjectsProjectIdMembersUrl(projectId),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(inviteMemberRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(inviteMemberRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postProjectsProjectIdMembersResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postProjectsProjectIdMembersResponse;
-};
 
-export const getPostProjectsProjectIdMembersMutationKey = () =>
-  ["postProjectsProjectIdMembers"] as const;
 
-export const getPostProjectsProjectIdMembersMutationOptions = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postProjectsProjectIdMembers>>,
-    TError,
-    PostProjectsProjectIdMembersMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postProjectsProjectIdMembers>>,
-  TError,
-  PostProjectsProjectIdMembersMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostProjectsProjectIdMembersMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postProjectsProjectIdMembers>>,
-    PostProjectsProjectIdMembersMutationVariables
-  > = (props) => {
-    const { projectId, data } = props ?? {};
+export const getPostProjectsProjectIdMembersMutationKey = () => ['postProjectsProjectIdMembers'] as const;
 
-    return postProjectsProjectIdMembers(projectId, data, fetchOptions);
-  };
+export const getPostProjectsProjectIdMembersMutationOptions = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdMembers>>, TError,PostProjectsProjectIdMembersMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdMembers>>, TError,PostProjectsProjectIdMembersMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostProjectsProjectIdMembersMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostProjectsProjectIdMembersMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postProjectsProjectIdMembers>>
->;
-export type PostProjectsProjectIdMembersMutationBody = InviteMemberRequest;
-export type PostProjectsProjectIdMembersMutationError =
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse;
-export type PostProjectsProjectIdMembersMutationVariables = {
-  projectId: number;
-  data: InviteMemberRequest;
-};
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postProjectsProjectIdMembers>>, PostProjectsProjectIdMembersMutationVariables> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  postProjectsProjectIdMembers(projectId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostProjectsProjectIdMembersMutationResult = NonNullable<Awaited<ReturnType<typeof postProjectsProjectIdMembers>>>
+    export type PostProjectsProjectIdMembersMutationBody = InviteMemberRequest
+    export type PostProjectsProjectIdMembersMutationError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+    export type PostProjectsProjectIdMembersMutationVariables = {projectId: number;data: InviteMemberRequest}
+
+    /**
  * Invites an existing verified user to the project with the given role. Only administrators can do this.
  * @summary Invite a member
  */
-export const usePostProjectsProjectIdMembers = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postProjectsProjectIdMembers>>,
-      TError,
-      PostProjectsProjectIdMembersMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postProjectsProjectIdMembers>>,
-  TError,
-  PostProjectsProjectIdMembersMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPostProjectsProjectIdMembersMutationOptions(options),
-    queryClient,
-  );
-};
-export type putProjectsProjectIdMembersMemberIdResponse200 = {
-  data: Member;
-  status: 200;
-};
+export const usePostProjectsProjectIdMembers = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdMembers>>, TError,PostProjectsProjectIdMembersMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postProjectsProjectIdMembers>>,
+        TError,
+        PostProjectsProjectIdMembersMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostProjectsProjectIdMembersMutationOptions(options), queryClient);
+    }
+    export type putProjectsProjectIdMembersMemberIdResponse200 = {
+  data: Member
+  status: 200
+}
 
 export type putProjectsProjectIdMembersMemberIdResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type putProjectsProjectIdMembersMemberIdResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type putProjectsProjectIdMembersMemberIdResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
+  data: ForbiddenResponse
+  status: 403
+}
 
 export type putProjectsProjectIdMembersMemberIdResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type putProjectsProjectIdMembersMemberIdResponseSuccess =
-  putProjectsProjectIdMembersMemberIdResponse200 & {
-    headers: Headers;
-  };
-export type putProjectsProjectIdMembersMemberIdResponseError = (
-  | putProjectsProjectIdMembersMemberIdResponse400
-  | putProjectsProjectIdMembersMemberIdResponse401
-  | putProjectsProjectIdMembersMemberIdResponse403
-  | putProjectsProjectIdMembersMemberIdResponse404
-) & {
+export type putProjectsProjectIdMembersMemberIdResponseSuccess = (putProjectsProjectIdMembersMemberIdResponse200) & {
+  headers: Headers;
+};
+export type putProjectsProjectIdMembersMemberIdResponseError = (putProjectsProjectIdMembersMemberIdResponse400 | putProjectsProjectIdMembersMemberIdResponse401 | putProjectsProjectIdMembersMemberIdResponse403 | putProjectsProjectIdMembersMemberIdResponse404) & {
   headers: Headers;
 };
 
-export type putProjectsProjectIdMembersMemberIdResponse =
-  | putProjectsProjectIdMembersMemberIdResponseSuccess
-  | putProjectsProjectIdMembersMemberIdResponseError;
+export type putProjectsProjectIdMembersMemberIdResponse = (putProjectsProjectIdMembersMemberIdResponseSuccess | putProjectsProjectIdMembersMemberIdResponseError)
 
-export const getPutProjectsProjectIdMembersMemberIdUrl = (
-  projectId: number,
-  memberId: number,
-) => {
-  return `/projects/${projectId}/members/${memberId}`;
-};
+export const getPutProjectsProjectIdMembersMemberIdUrl = (projectId: number,
+    memberId: number,) => {
 
-/**
- * Updates the role of a project member. Only administrators can do this.
- * @summary Change a member's role
- */
-export const putProjectsProjectIdMembersMemberId = async (
-  projectId: number,
-  memberId: number,
-  editMemberRequest: EditMemberRequest,
-  options?: RequestInit,
-): Promise<putProjectsProjectIdMembersMemberIdResponse> => {
-  const res = await fetch(
-    getPutProjectsProjectIdMembersMemberIdUrl(projectId, memberId),
-    {
-      ...options,
-      method: "PUT",
-      headers: getHeaders(
-        { "Content-Type": "application/json" },
-        options?.headers,
-      ),
-      body: JSON.stringify(editMemberRequest),
-    },
-  );
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: putProjectsProjectIdMembersMemberIdResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as putProjectsProjectIdMembersMemberIdResponse;
-};
 
-export const getPutProjectsProjectIdMembersMemberIdMutationKey = () =>
-  ["putProjectsProjectIdMembersMemberId"] as const;
-
-export const getPutProjectsProjectIdMembersMemberIdMutationOptions = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>,
-    TError,
-    PutProjectsProjectIdMembersMemberIdMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>,
-  TError,
-  PutProjectsProjectIdMembersMemberIdMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPutProjectsProjectIdMembersMemberIdMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>,
-    PutProjectsProjectIdMembersMemberIdMutationVariables
-  > = (props) => {
-    const { projectId, memberId, data } = props ?? {};
-
-    return putProjectsProjectIdMembersMemberId(
-      projectId,
-      memberId,
-      data,
-      fetchOptions,
-    );
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type PutProjectsProjectIdMembersMemberIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>
->;
-export type PutProjectsProjectIdMembersMemberIdMutationBody = EditMemberRequest;
-export type PutProjectsProjectIdMembersMemberIdMutationError =
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse;
-export type PutProjectsProjectIdMembersMemberIdMutationVariables = {
-  projectId: number;
-  memberId: number;
-  data: EditMemberRequest;
-};
+  return `/projects/${projectId}/members/${memberId}`
+}
 
 /**
  * Updates the role of a project member. Only administrators can do this.
  * @summary Change a member's role
  */
-export const usePutProjectsProjectIdMembersMemberId = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>,
-      TError,
-      PutProjectsProjectIdMembersMemberIdMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>,
-  TError,
-  PutProjectsProjectIdMembersMemberIdMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPutProjectsProjectIdMembersMemberIdMutationOptions(options),
-    queryClient,
-  );
-};
-export type deleteProjectsProjectIdMembersMemberIdResponse200 = {
-  data: Message;
-  status: 200;
-};
+export const putProjectsProjectIdMembersMemberId = async (projectId: number,
+    memberId: number,
+    editMemberRequest: EditMemberRequest, options?: Parameters<typeof fetcher>[1]): Promise<putProjectsProjectIdMembersMemberIdResponse> => {
+
+  return fetcher<putProjectsProjectIdMembersMemberIdResponse>(getPutProjectsProjectIdMembersMemberIdUrl(projectId,memberId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(editMemberRequest)
+  }
+);}
+
+
+
+
+
+export const getPutProjectsProjectIdMembersMemberIdMutationKey = () => ['putProjectsProjectIdMembersMemberId'] as const;
+
+export const getPutProjectsProjectIdMembersMemberIdMutationOptions = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>, TError,PutProjectsProjectIdMembersMemberIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>, TError,PutProjectsProjectIdMembersMemberIdMutationVariables, TContext> => {
+
+const mutationKey = getPutProjectsProjectIdMembersMemberIdMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>, PutProjectsProjectIdMembersMemberIdMutationVariables> = (props) => {
+          const {projectId,memberId,data} = props ?? {};
+
+          return  putProjectsProjectIdMembersMemberId(projectId,memberId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutProjectsProjectIdMembersMemberIdMutationResult = NonNullable<Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>>
+    export type PutProjectsProjectIdMembersMemberIdMutationBody = EditMemberRequest
+    export type PutProjectsProjectIdMembersMemberIdMutationError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+    export type PutProjectsProjectIdMembersMemberIdMutationVariables = {projectId: number;memberId: number;data: EditMemberRequest}
+
+    /**
+ * Updates the role of a project member. Only administrators can do this.
+ * @summary Change a member's role
+ */
+export const usePutProjectsProjectIdMembersMemberId = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>, TError,PutProjectsProjectIdMembersMemberIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putProjectsProjectIdMembersMemberId>>,
+        TError,
+        PutProjectsProjectIdMembersMemberIdMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPutProjectsProjectIdMembersMemberIdMutationOptions(options), queryClient);
+    }
+    export type deleteProjectsProjectIdMembersMemberIdResponse200 = {
+  data: Message
+  status: 200
+}
 
 export type deleteProjectsProjectIdMembersMemberIdResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type deleteProjectsProjectIdMembersMemberIdResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
+  data: ForbiddenResponse
+  status: 403
+}
 
 export type deleteProjectsProjectIdMembersMemberIdResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type deleteProjectsProjectIdMembersMemberIdResponseSuccess =
-  deleteProjectsProjectIdMembersMemberIdResponse200 & {
-    headers: Headers;
-  };
-export type deleteProjectsProjectIdMembersMemberIdResponseError = (
-  | deleteProjectsProjectIdMembersMemberIdResponse401
-  | deleteProjectsProjectIdMembersMemberIdResponse403
-  | deleteProjectsProjectIdMembersMemberIdResponse404
-) & {
+export type deleteProjectsProjectIdMembersMemberIdResponseSuccess = (deleteProjectsProjectIdMembersMemberIdResponse200) & {
+  headers: Headers;
+};
+export type deleteProjectsProjectIdMembersMemberIdResponseError = (deleteProjectsProjectIdMembersMemberIdResponse401 | deleteProjectsProjectIdMembersMemberIdResponse403 | deleteProjectsProjectIdMembersMemberIdResponse404) & {
   headers: Headers;
 };
 
-export type deleteProjectsProjectIdMembersMemberIdResponse =
-  | deleteProjectsProjectIdMembersMemberIdResponseSuccess
-  | deleteProjectsProjectIdMembersMemberIdResponseError;
+export type deleteProjectsProjectIdMembersMemberIdResponse = (deleteProjectsProjectIdMembersMemberIdResponseSuccess | deleteProjectsProjectIdMembersMemberIdResponseError)
 
-export const getDeleteProjectsProjectIdMembersMemberIdUrl = (
-  projectId: number,
-  memberId: number,
-) => {
-  return `/projects/${projectId}/members/${memberId}`;
-};
+export const getDeleteProjectsProjectIdMembersMemberIdUrl = (projectId: number,
+    memberId: number,) => {
 
-/**
- * Removes a member from the project. Only administrators can do this.
- * @summary Remove a member
- */
-export const deleteProjectsProjectIdMembersMemberId = async (
-  projectId: number,
-  memberId: number,
-  options?: RequestInit,
-): Promise<deleteProjectsProjectIdMembersMemberIdResponse> => {
-  const res = await fetch(
-    getDeleteProjectsProjectIdMembersMemberIdUrl(projectId, memberId),
-    {
-      ...options,
-      method: "DELETE",
-    },
-  );
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: deleteProjectsProjectIdMembersMemberIdResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as deleteProjectsProjectIdMembersMemberIdResponse;
-};
 
-export const getDeleteProjectsProjectIdMembersMemberIdMutationKey = () =>
-  ["deleteProjectsProjectIdMembersMemberId"] as const;
-
-export const getDeleteProjectsProjectIdMembersMemberIdMutationOptions = <
-  TError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>,
-    TError,
-    DeleteProjectsProjectIdMembersMemberIdMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>,
-  TError,
-  DeleteProjectsProjectIdMembersMemberIdMutationVariables,
-  TContext
-> => {
-  const mutationKey = getDeleteProjectsProjectIdMembersMemberIdMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>,
-    DeleteProjectsProjectIdMembersMemberIdMutationVariables
-  > = (props) => {
-    const { projectId, memberId } = props ?? {};
-
-    return deleteProjectsProjectIdMembersMemberId(
-      projectId,
-      memberId,
-      fetchOptions,
-    );
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteProjectsProjectIdMembersMemberIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>
->;
-
-export type DeleteProjectsProjectIdMembersMemberIdMutationError =
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse;
-export type DeleteProjectsProjectIdMembersMemberIdMutationVariables = {
-  projectId: number;
-  memberId: number;
-};
+  return `/projects/${projectId}/members/${memberId}`
+}
 
 /**
  * Removes a member from the project. Only administrators can do this.
  * @summary Remove a member
  */
-export const useDeleteProjectsProjectIdMembersMemberId = <
-  TError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>,
-      TError,
-      DeleteProjectsProjectIdMembersMemberIdMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>,
-  TError,
-  DeleteProjectsProjectIdMembersMemberIdMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getDeleteProjectsProjectIdMembersMemberIdMutationOptions(options),
-    queryClient,
-  );
-};
+export const deleteProjectsProjectIdMembersMemberId = async (projectId: number,
+    memberId: number, options?: Parameters<typeof fetcher>[1]): Promise<deleteProjectsProjectIdMembersMemberIdResponse> => {
+
+  return fetcher<deleteProjectsProjectIdMembersMemberIdResponse>(getDeleteProjectsProjectIdMembersMemberIdUrl(projectId,memberId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteProjectsProjectIdMembersMemberIdMutationKey = () => ['deleteProjectsProjectIdMembersMemberId'] as const;
+
+export const getDeleteProjectsProjectIdMembersMemberIdMutationOptions = <TError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>, TError,DeleteProjectsProjectIdMembersMemberIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>, TError,DeleteProjectsProjectIdMembersMemberIdMutationVariables, TContext> => {
+
+const mutationKey = getDeleteProjectsProjectIdMembersMemberIdMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>, DeleteProjectsProjectIdMembersMemberIdMutationVariables> = (props) => {
+          const {projectId,memberId} = props ?? {};
+
+          return  deleteProjectsProjectIdMembersMemberId(projectId,memberId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProjectsProjectIdMembersMemberIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>>
+
+    export type DeleteProjectsProjectIdMembersMemberIdMutationError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+    export type DeleteProjectsProjectIdMembersMemberIdMutationVariables = {projectId: number;memberId: number}
+
+    /**
+ * Removes a member from the project. Only administrators can do this.
+ * @summary Remove a member
+ */
+export const useDeleteProjectsProjectIdMembersMemberId = <TError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>, TError,DeleteProjectsProjectIdMembersMemberIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProjectsProjectIdMembersMemberId>>,
+        TError,
+        DeleteProjectsProjectIdMembersMemberIdMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteProjectsProjectIdMembersMemberIdMutationOptions(options), queryClient);
+    }

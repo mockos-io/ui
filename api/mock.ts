@@ -16,7 +16,10 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -29,68 +32,37 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   MockFailureResponse,
   MockNotFoundResponse,
   MockSuccessResponse,
-  MockUnauthorizedResponse,
-} from "./model";
+  MockUnauthorizedResponse
+} from './model';
+
+import { fetcher } from '../lib/api-fetcher';
+
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
 export type HTTPStatusCode2xx = 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207;
 export type HTTPStatusCode3xx = 300 | 301 | 302 | 303 | 304 | 305 | 307 | 308;
-export type HTTPStatusCode4xx =
-  | 400
-  | 401
-  | 402
-  | 403
-  | 404
-  | 405
-  | 406
-  | 407
-  | 408
-  | 409
-  | 410
-  | 411
-  | 412
-  | 413
-  | 414
-  | 415
-  | 416
-  | 417
-  | 418
-  | 419
-  | 420
-  | 421
-  | 422
-  | 423
-  | 424
-  | 426
-  | 428
-  | 429
-  | 431
-  | 451;
+export type HTTPStatusCode4xx = 400 | 401 | 402 | 403 | 404 | 405 | 406 | 407 | 408 | 409 | 410 | 411 | 412 | 413 | 414 | 415 | 416 | 417 | 418 | 419 | 420 | 421 | 422 | 423 | 424 | 426 | 428 | 429 | 431 | 451;
 export type HTTPStatusCode5xx = 500 | 501 | 502 | 503 | 504 | 505 | 507 | 511;
-export type HTTPStatusCodes =
-  | HTTPStatusCode1xx
-  | HTTPStatusCode2xx
-  | HTTPStatusCode3xx
-  | HTTPStatusCode4xx
-  | HTTPStatusCode5xx;
+export type HTTPStatusCodes = HTTPStatusCode1xx | HTTPStatusCode2xx | HTTPStatusCode3xx | HTTPStatusCode4xx | HTTPStatusCode5xx;
 
-const withQueryKey = <T extends object, K>(
-  query: T,
-  queryKey: K,
-): T & { queryKey: K } => {
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -101,38 +73,39 @@ const withQueryKey = <T extends object, K>(
 };
 
 export type getMockTokenResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+  data: MockFailureResponse
+  status: 400
+}
 
 export type getMockTokenResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type getMockTokenResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type getMockTokenResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type getMockTokenResponseError = (
-  | getMockTokenResponse400
-  | getMockTokenResponse401
-  | getMockTokenResponse404
-  | getMockTokenResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type getMockTokenResponseError = (getMockTokenResponse400 | getMockTokenResponse401 | getMockTokenResponse404 | getMockTokenResponseDefault) & {
   headers: Headers;
 };
 
-export type getMockTokenResponse = getMockTokenResponseError;
+export type getMockTokenResponse = (getMockTokenResponseError)
 
-export const getGetMockTokenUrl = (token: string) => {
-  return `/mock/${token}`;
-};
+export const getGetMockTokenUrl = (token: string,) => {
+
+
+
+
+  return `/mock/${token}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -144,73 +117,49 @@ export const getGetMockTokenUrl = (token: string) => {
  * way.
  * @summary Call a project's mock API
  */
-export const getMockToken = async (
-  token: string,
-  options?: RequestInit,
-): Promise<getMockTokenResponse> => {
-  const res = await fetch(getGetMockTokenUrl(token), {
+export const getMockToken = async (token: string, options?: Parameters<typeof fetcher>[1]): Promise<getMockTokenResponse> => {
+
+  return fetcher<getMockTokenResponse>(getGetMockTokenUrl(token),
+  {
     ...options,
-    method: "GET",
-  });
+    method: 'GET'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getMockTokenResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as getMockTokenResponse;
-};
+  }
+);}
 
-export const getGetMockTokenQueryKey = (token: string) => {
-  return [`/mock/${token}`] as const;
-};
 
-export const getGetMockTokenQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMockToken>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>
-    >;
-    fetch?: RequestInit;
-  },
+
+
+
+export const getGetMockTokenQueryKey = (token: string,) => {
+    return [
+    `/mock/${token}`
+    ] as const;
+    }
+
+
+export const getGetMockTokenQueryOptions = <TData = Awaited<ReturnType<typeof getMockToken>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMockTokenQueryKey(token);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMockToken>>> = ({
-    signal,
-  }) => getMockToken(token, { signal, ...fetchOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMockTokenQueryKey(token);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: token !== null && token !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMockToken>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type GetMockTokenQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMockToken>>
->;
-export type GetMockTokenQueryError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMockToken>>> = ({ signal }) => getMockToken(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMockTokenQueryResult = NonNullable<Awaited<ReturnType<typeof getMockToken>>>
+export type GetMockTokenQueryError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -222,33 +171,16 @@ export type GetMockTokenQueryError =
  * way.
  * @summary Call a project's mock API
  */
-export function useGetMockToken<
-  TData = Awaited<ReturnType<typeof getMockToken>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>
-    > &
-      Pick<
+export function useGetMockToken<TData = Awaited<ReturnType<typeof getMockToken>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(
+ token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMockToken>>,
           TError,
           Awaited<ReturnType<typeof getMockToken>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method is matched
@@ -259,33 +191,16 @@ export function useGetMockToken<
  * way.
  * @summary Call a project's mock API
  */
-export function useGetMockToken<
-  TData = Awaited<ReturnType<typeof getMockToken>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>
-    > &
-      Pick<
+export function useGetMockToken<TData = Awaited<ReturnType<typeof getMockToken>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMockToken>>,
           TError,
           Awaited<ReturnType<typeof getMockToken>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method is matched
@@ -296,25 +211,10 @@ export function useGetMockToken<
  * way.
  * @summary Call a project's mock API
  */
-export function useGetMockToken<
-  TData = Awaited<ReturnType<typeof getMockToken>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetMockToken<TData = Awaited<ReturnType<typeof getMockToken>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method is matched
@@ -325,68 +225,57 @@ export function useGetMockToken<
  * way.
  * @summary Call a project's mock API
  */
-export function useGetMockToken<
-  TData = Awaited<ReturnType<typeof getMockToken>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMockTokenQueryOptions(token, options);
+export function useGetMockToken<TData = Awaited<ReturnType<typeof getMockToken>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockToken>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMockTokenQueryOptions(token,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
 
 export type postMockTokenResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+  data: MockFailureResponse
+  status: 400
+}
 
 export type postMockTokenResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type postMockTokenResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type postMockTokenResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type postMockTokenResponseError = (
-  | postMockTokenResponse400
-  | postMockTokenResponse401
-  | postMockTokenResponse404
-  | postMockTokenResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type postMockTokenResponseError = (postMockTokenResponse400 | postMockTokenResponse401 | postMockTokenResponse404 | postMockTokenResponseDefault) & {
   headers: Headers;
 };
 
-export type postMockTokenResponse = postMockTokenResponseError;
+export type postMockTokenResponse = (postMockTokenResponseError)
 
-export const getPostMockTokenUrl = (token: string) => {
-  return `/mock/${token}`;
-};
+export const getPostMockTokenUrl = (token: string,) => {
+
+
+
+
+  return `/mock/${token}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -398,81 +287,56 @@ export const getPostMockTokenUrl = (token: string) => {
  * way.
  * @summary Call a project's mock API
  */
-export const postMockToken = async (
-  token: string,
-  options?: RequestInit,
-): Promise<postMockTokenResponse> => {
-  const res = await fetch(getPostMockTokenUrl(token), {
+export const postMockToken = async (token: string, options?: Parameters<typeof fetcher>[1]): Promise<postMockTokenResponse> => {
+
+  return fetcher<postMockTokenResponse>(getPostMockTokenUrl(token),
+  {
     ...options,
-    method: "POST",
-  });
+    method: 'POST'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postMockTokenResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postMockTokenResponse;
-};
+  }
+);}
 
-export const getPostMockTokenMutationKey = () => ["postMockToken"] as const;
 
-export const getPostMockTokenMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postMockToken>>,
-    TError,
-    PostMockTokenMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postMockToken>>,
-  TError,
-  PostMockTokenMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostMockTokenMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postMockToken>>,
-    PostMockTokenMutationVariables
-  > = (props) => {
-    const { token } = props ?? {};
 
-    return postMockToken(token, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getPostMockTokenMutationKey = () => ['postMockToken'] as const;
 
-export type PostMockTokenMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postMockToken>>
->;
+export const getPostMockTokenMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMockToken>>, TError,PostMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postMockToken>>, TError,PostMockTokenMutationVariables, TContext> => {
 
-export type PostMockTokenMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type PostMockTokenMutationVariables = { token: string };
+const mutationKey = getPostMockTokenMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postMockToken>>, PostMockTokenMutationVariables> = (props) => {
+          const {token} = props ?? {};
+
+          return  postMockToken(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostMockTokenMutationResult = NonNullable<Awaited<ReturnType<typeof postMockToken>>>
+
+    export type PostMockTokenMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type PostMockTokenMutationVariables = {token: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method is matched
  * against the project's enabled routes, and the matched response's status
@@ -482,65 +346,50 @@ export type PostMockTokenMutationVariables = { token: string };
  * way.
  * @summary Call a project's mock API
  */
-export const usePostMockToken = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postMockToken>>,
-      TError,
-      PostMockTokenMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postMockToken>>,
-  TError,
-  PostMockTokenMutationVariables,
-  TContext
-> => {
-  return useMutation(getPostMockTokenMutationOptions(options), queryClient);
-};
-export type putMockTokenResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const usePostMockToken = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMockToken>>, TError,PostMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postMockToken>>,
+        TError,
+        PostMockTokenMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostMockTokenMutationOptions(options), queryClient);
+    }
+    export type putMockTokenResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type putMockTokenResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type putMockTokenResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type putMockTokenResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type putMockTokenResponseError = (
-  | putMockTokenResponse400
-  | putMockTokenResponse401
-  | putMockTokenResponse404
-  | putMockTokenResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type putMockTokenResponseError = (putMockTokenResponse400 | putMockTokenResponse401 | putMockTokenResponse404 | putMockTokenResponseDefault) & {
   headers: Headers;
 };
 
-export type putMockTokenResponse = putMockTokenResponseError;
+export type putMockTokenResponse = (putMockTokenResponseError)
 
-export const getPutMockTokenUrl = (token: string) => {
-  return `/mock/${token}`;
-};
+export const getPutMockTokenUrl = (token: string,) => {
+
+
+
+
+  return `/mock/${token}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -552,81 +401,56 @@ export const getPutMockTokenUrl = (token: string) => {
  * way.
  * @summary Call a project's mock API
  */
-export const putMockToken = async (
-  token: string,
-  options?: RequestInit,
-): Promise<putMockTokenResponse> => {
-  const res = await fetch(getPutMockTokenUrl(token), {
+export const putMockToken = async (token: string, options?: Parameters<typeof fetcher>[1]): Promise<putMockTokenResponse> => {
+
+  return fetcher<putMockTokenResponse>(getPutMockTokenUrl(token),
+  {
     ...options,
-    method: "PUT",
-  });
+    method: 'PUT'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: putMockTokenResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as putMockTokenResponse;
-};
+  }
+);}
 
-export const getPutMockTokenMutationKey = () => ["putMockToken"] as const;
 
-export const getPutMockTokenMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putMockToken>>,
-    TError,
-    PutMockTokenMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putMockToken>>,
-  TError,
-  PutMockTokenMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPutMockTokenMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putMockToken>>,
-    PutMockTokenMutationVariables
-  > = (props) => {
-    const { token } = props ?? {};
 
-    return putMockToken(token, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getPutMockTokenMutationKey = () => ['putMockToken'] as const;
 
-export type PutMockTokenMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putMockToken>>
->;
+export const getPutMockTokenMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putMockToken>>, TError,PutMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof putMockToken>>, TError,PutMockTokenMutationVariables, TContext> => {
 
-export type PutMockTokenMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type PutMockTokenMutationVariables = { token: string };
+const mutationKey = getPutMockTokenMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putMockToken>>, PutMockTokenMutationVariables> = (props) => {
+          const {token} = props ?? {};
+
+          return  putMockToken(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutMockTokenMutationResult = NonNullable<Awaited<ReturnType<typeof putMockToken>>>
+
+    export type PutMockTokenMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type PutMockTokenMutationVariables = {token: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method is matched
  * against the project's enabled routes, and the matched response's status
@@ -636,65 +460,50 @@ export type PutMockTokenMutationVariables = { token: string };
  * way.
  * @summary Call a project's mock API
  */
-export const usePutMockToken = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putMockToken>>,
-      TError,
-      PutMockTokenMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof putMockToken>>,
-  TError,
-  PutMockTokenMutationVariables,
-  TContext
-> => {
-  return useMutation(getPutMockTokenMutationOptions(options), queryClient);
-};
-export type patchMockTokenResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const usePutMockToken = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putMockToken>>, TError,PutMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putMockToken>>,
+        TError,
+        PutMockTokenMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPutMockTokenMutationOptions(options), queryClient);
+    }
+    export type patchMockTokenResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type patchMockTokenResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type patchMockTokenResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type patchMockTokenResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type patchMockTokenResponseError = (
-  | patchMockTokenResponse400
-  | patchMockTokenResponse401
-  | patchMockTokenResponse404
-  | patchMockTokenResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type patchMockTokenResponseError = (patchMockTokenResponse400 | patchMockTokenResponse401 | patchMockTokenResponse404 | patchMockTokenResponseDefault) & {
   headers: Headers;
 };
 
-export type patchMockTokenResponse = patchMockTokenResponseError;
+export type patchMockTokenResponse = (patchMockTokenResponseError)
 
-export const getPatchMockTokenUrl = (token: string) => {
-  return `/mock/${token}`;
-};
+export const getPatchMockTokenUrl = (token: string,) => {
+
+
+
+
+  return `/mock/${token}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -706,81 +515,56 @@ export const getPatchMockTokenUrl = (token: string) => {
  * way.
  * @summary Call a project's mock API
  */
-export const patchMockToken = async (
-  token: string,
-  options?: RequestInit,
-): Promise<patchMockTokenResponse> => {
-  const res = await fetch(getPatchMockTokenUrl(token), {
+export const patchMockToken = async (token: string, options?: Parameters<typeof fetcher>[1]): Promise<patchMockTokenResponse> => {
+
+  return fetcher<patchMockTokenResponse>(getPatchMockTokenUrl(token),
+  {
     ...options,
-    method: "PATCH",
-  });
+    method: 'PATCH'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: patchMockTokenResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as patchMockTokenResponse;
-};
+  }
+);}
 
-export const getPatchMockTokenMutationKey = () => ["patchMockToken"] as const;
 
-export const getPatchMockTokenMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof patchMockToken>>,
-    TError,
-    PatchMockTokenMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof patchMockToken>>,
-  TError,
-  PatchMockTokenMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPatchMockTokenMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof patchMockToken>>,
-    PatchMockTokenMutationVariables
-  > = (props) => {
-    const { token } = props ?? {};
 
-    return patchMockToken(token, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getPatchMockTokenMutationKey = () => ['patchMockToken'] as const;
 
-export type PatchMockTokenMutationResult = NonNullable<
-  Awaited<ReturnType<typeof patchMockToken>>
->;
+export const getPatchMockTokenMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchMockToken>>, TError,PatchMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof patchMockToken>>, TError,PatchMockTokenMutationVariables, TContext> => {
 
-export type PatchMockTokenMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type PatchMockTokenMutationVariables = { token: string };
+const mutationKey = getPatchMockTokenMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchMockToken>>, PatchMockTokenMutationVariables> = (props) => {
+          const {token} = props ?? {};
+
+          return  patchMockToken(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PatchMockTokenMutationResult = NonNullable<Awaited<ReturnType<typeof patchMockToken>>>
+
+    export type PatchMockTokenMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type PatchMockTokenMutationVariables = {token: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method is matched
  * against the project's enabled routes, and the matched response's status
@@ -790,65 +574,50 @@ export type PatchMockTokenMutationVariables = { token: string };
  * way.
  * @summary Call a project's mock API
  */
-export const usePatchMockToken = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof patchMockToken>>,
-      TError,
-      PatchMockTokenMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof patchMockToken>>,
-  TError,
-  PatchMockTokenMutationVariables,
-  TContext
-> => {
-  return useMutation(getPatchMockTokenMutationOptions(options), queryClient);
-};
-export type deleteMockTokenResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const usePatchMockToken = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchMockToken>>, TError,PatchMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof patchMockToken>>,
+        TError,
+        PatchMockTokenMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPatchMockTokenMutationOptions(options), queryClient);
+    }
+    export type deleteMockTokenResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type deleteMockTokenResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type deleteMockTokenResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type deleteMockTokenResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type deleteMockTokenResponseError = (
-  | deleteMockTokenResponse400
-  | deleteMockTokenResponse401
-  | deleteMockTokenResponse404
-  | deleteMockTokenResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type deleteMockTokenResponseError = (deleteMockTokenResponse400 | deleteMockTokenResponse401 | deleteMockTokenResponse404 | deleteMockTokenResponseDefault) & {
   headers: Headers;
 };
 
-export type deleteMockTokenResponse = deleteMockTokenResponseError;
+export type deleteMockTokenResponse = (deleteMockTokenResponseError)
 
-export const getDeleteMockTokenUrl = (token: string) => {
-  return `/mock/${token}`;
-};
+export const getDeleteMockTokenUrl = (token: string,) => {
+
+
+
+
+  return `/mock/${token}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -860,81 +629,56 @@ export const getDeleteMockTokenUrl = (token: string) => {
  * way.
  * @summary Call a project's mock API
  */
-export const deleteMockToken = async (
-  token: string,
-  options?: RequestInit,
-): Promise<deleteMockTokenResponse> => {
-  const res = await fetch(getDeleteMockTokenUrl(token), {
+export const deleteMockToken = async (token: string, options?: Parameters<typeof fetcher>[1]): Promise<deleteMockTokenResponse> => {
+
+  return fetcher<deleteMockTokenResponse>(getDeleteMockTokenUrl(token),
+  {
     ...options,
-    method: "DELETE",
-  });
+    method: 'DELETE'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: deleteMockTokenResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as deleteMockTokenResponse;
-};
+  }
+);}
 
-export const getDeleteMockTokenMutationKey = () => ["deleteMockToken"] as const;
 
-export const getDeleteMockTokenMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteMockToken>>,
-    TError,
-    DeleteMockTokenMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteMockToken>>,
-  TError,
-  DeleteMockTokenMutationVariables,
-  TContext
-> => {
-  const mutationKey = getDeleteMockTokenMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteMockToken>>,
-    DeleteMockTokenMutationVariables
-  > = (props) => {
-    const { token } = props ?? {};
 
-    return deleteMockToken(token, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getDeleteMockTokenMutationKey = () => ['deleteMockToken'] as const;
 
-export type DeleteMockTokenMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteMockToken>>
->;
+export const getDeleteMockTokenMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMockToken>>, TError,DeleteMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMockToken>>, TError,DeleteMockTokenMutationVariables, TContext> => {
 
-export type DeleteMockTokenMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type DeleteMockTokenMutationVariables = { token: string };
+const mutationKey = getDeleteMockTokenMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMockToken>>, DeleteMockTokenMutationVariables> = (props) => {
+          const {token} = props ?? {};
+
+          return  deleteMockToken(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMockTokenMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMockToken>>>
+
+    export type DeleteMockTokenMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type DeleteMockTokenMutationVariables = {token: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method is matched
  * against the project's enabled routes, and the matched response's status
@@ -944,65 +688,50 @@ export type DeleteMockTokenMutationVariables = { token: string };
  * way.
  * @summary Call a project's mock API
  */
-export const useDeleteMockToken = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteMockToken>>,
-      TError,
-      DeleteMockTokenMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteMockToken>>,
-  TError,
-  DeleteMockTokenMutationVariables,
-  TContext
-> => {
-  return useMutation(getDeleteMockTokenMutationOptions(options), queryClient);
-};
-export type headMockTokenResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const useDeleteMockToken = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMockToken>>, TError,DeleteMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMockToken>>,
+        TError,
+        DeleteMockTokenMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteMockTokenMutationOptions(options), queryClient);
+    }
+    export type headMockTokenResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type headMockTokenResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type headMockTokenResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type headMockTokenResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type headMockTokenResponseError = (
-  | headMockTokenResponse400
-  | headMockTokenResponse401
-  | headMockTokenResponse404
-  | headMockTokenResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type headMockTokenResponseError = (headMockTokenResponse400 | headMockTokenResponse401 | headMockTokenResponse404 | headMockTokenResponseDefault) & {
   headers: Headers;
 };
 
-export type headMockTokenResponse = headMockTokenResponseError;
+export type headMockTokenResponse = (headMockTokenResponseError)
 
-export const getHeadMockTokenUrl = (token: string) => {
-  return `/mock/${token}`;
-};
+export const getHeadMockTokenUrl = (token: string,) => {
+
+
+
+
+  return `/mock/${token}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -1014,81 +743,56 @@ export const getHeadMockTokenUrl = (token: string) => {
  * way.
  * @summary Call a project's mock API
  */
-export const headMockToken = async (
-  token: string,
-  options?: RequestInit,
-): Promise<headMockTokenResponse> => {
-  const res = await fetch(getHeadMockTokenUrl(token), {
+export const headMockToken = async (token: string, options?: Parameters<typeof fetcher>[1]): Promise<headMockTokenResponse> => {
+
+  return fetcher<headMockTokenResponse>(getHeadMockTokenUrl(token),
+  {
     ...options,
-    method: "HEAD",
-  });
+    method: 'HEAD'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: headMockTokenResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as headMockTokenResponse;
-};
+  }
+);}
 
-export const getHeadMockTokenMutationKey = () => ["headMockToken"] as const;
 
-export const getHeadMockTokenMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof headMockToken>>,
-    TError,
-    HeadMockTokenMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof headMockToken>>,
-  TError,
-  HeadMockTokenMutationVariables,
-  TContext
-> => {
-  const mutationKey = getHeadMockTokenMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof headMockToken>>,
-    HeadMockTokenMutationVariables
-  > = (props) => {
-    const { token } = props ?? {};
 
-    return headMockToken(token, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getHeadMockTokenMutationKey = () => ['headMockToken'] as const;
 
-export type HeadMockTokenMutationResult = NonNullable<
-  Awaited<ReturnType<typeof headMockToken>>
->;
+export const getHeadMockTokenMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof headMockToken>>, TError,HeadMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof headMockToken>>, TError,HeadMockTokenMutationVariables, TContext> => {
 
-export type HeadMockTokenMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type HeadMockTokenMutationVariables = { token: string };
+const mutationKey = getHeadMockTokenMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof headMockToken>>, HeadMockTokenMutationVariables> = (props) => {
+          const {token} = props ?? {};
+
+          return  headMockToken(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HeadMockTokenMutationResult = NonNullable<Awaited<ReturnType<typeof headMockToken>>>
+
+    export type HeadMockTokenMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type HeadMockTokenMutationVariables = {token: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method is matched
  * against the project's enabled routes, and the matched response's status
@@ -1098,65 +802,50 @@ export type HeadMockTokenMutationVariables = { token: string };
  * way.
  * @summary Call a project's mock API
  */
-export const useHeadMockToken = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof headMockToken>>,
-      TError,
-      HeadMockTokenMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof headMockToken>>,
-  TError,
-  HeadMockTokenMutationVariables,
-  TContext
-> => {
-  return useMutation(getHeadMockTokenMutationOptions(options), queryClient);
-};
-export type optionsMockTokenResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const useHeadMockToken = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof headMockToken>>, TError,HeadMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof headMockToken>>,
+        TError,
+        HeadMockTokenMutationVariables,
+        TContext
+      > => {
+      return useMutation(getHeadMockTokenMutationOptions(options), queryClient);
+    }
+    export type optionsMockTokenResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type optionsMockTokenResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type optionsMockTokenResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type optionsMockTokenResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type optionsMockTokenResponseError = (
-  | optionsMockTokenResponse400
-  | optionsMockTokenResponse401
-  | optionsMockTokenResponse404
-  | optionsMockTokenResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type optionsMockTokenResponseError = (optionsMockTokenResponse400 | optionsMockTokenResponse401 | optionsMockTokenResponse404 | optionsMockTokenResponseDefault) & {
   headers: Headers;
 };
 
-export type optionsMockTokenResponse = optionsMockTokenResponseError;
+export type optionsMockTokenResponse = (optionsMockTokenResponseError)
 
-export const getOptionsMockTokenUrl = (token: string) => {
-  return `/mock/${token}`;
-};
+export const getOptionsMockTokenUrl = (token: string,) => {
+
+
+
+
+  return `/mock/${token}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -1168,82 +857,56 @@ export const getOptionsMockTokenUrl = (token: string) => {
  * way.
  * @summary Call a project's mock API
  */
-export const optionsMockToken = async (
-  token: string,
-  options?: RequestInit,
-): Promise<optionsMockTokenResponse> => {
-  const res = await fetch(getOptionsMockTokenUrl(token), {
+export const optionsMockToken = async (token: string, options?: Parameters<typeof fetcher>[1]): Promise<optionsMockTokenResponse> => {
+
+  return fetcher<optionsMockTokenResponse>(getOptionsMockTokenUrl(token),
+  {
     ...options,
-    method: "OPTIONS",
-  });
+    method: 'OPTIONS'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: optionsMockTokenResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as optionsMockTokenResponse;
-};
+  }
+);}
 
-export const getOptionsMockTokenMutationKey = () =>
-  ["optionsMockToken"] as const;
 
-export const getOptionsMockTokenMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof optionsMockToken>>,
-    TError,
-    OptionsMockTokenMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof optionsMockToken>>,
-  TError,
-  OptionsMockTokenMutationVariables,
-  TContext
-> => {
-  const mutationKey = getOptionsMockTokenMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof optionsMockToken>>,
-    OptionsMockTokenMutationVariables
-  > = (props) => {
-    const { token } = props ?? {};
 
-    return optionsMockToken(token, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getOptionsMockTokenMutationKey = () => ['optionsMockToken'] as const;
 
-export type OptionsMockTokenMutationResult = NonNullable<
-  Awaited<ReturnType<typeof optionsMockToken>>
->;
+export const getOptionsMockTokenMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof optionsMockToken>>, TError,OptionsMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof optionsMockToken>>, TError,OptionsMockTokenMutationVariables, TContext> => {
 
-export type OptionsMockTokenMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type OptionsMockTokenMutationVariables = { token: string };
+const mutationKey = getOptionsMockTokenMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof optionsMockToken>>, OptionsMockTokenMutationVariables> = (props) => {
+          const {token} = props ?? {};
+
+          return  optionsMockToken(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OptionsMockTokenMutationResult = NonNullable<Awaited<ReturnType<typeof optionsMockToken>>>
+
+    export type OptionsMockTokenMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type OptionsMockTokenMutationVariables = {token: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method is matched
  * against the project's enabled routes, and the matched response's status
@@ -1253,65 +916,51 @@ export type OptionsMockTokenMutationVariables = { token: string };
  * way.
  * @summary Call a project's mock API
  */
-export const useOptionsMockToken = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof optionsMockToken>>,
-      TError,
-      OptionsMockTokenMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof optionsMockToken>>,
-  TError,
-  OptionsMockTokenMutationVariables,
-  TContext
-> => {
-  return useMutation(getOptionsMockTokenMutationOptions(options), queryClient);
-};
-export type getMockTokenPathResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const useOptionsMockToken = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof optionsMockToken>>, TError,OptionsMockTokenMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof optionsMockToken>>,
+        TError,
+        OptionsMockTokenMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOptionsMockTokenMutationOptions(options), queryClient);
+    }
+    export type getMockTokenPathResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type getMockTokenPathResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type getMockTokenPathResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type getMockTokenPathResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type getMockTokenPathResponseError = (
-  | getMockTokenPathResponse400
-  | getMockTokenPathResponse401
-  | getMockTokenPathResponse404
-  | getMockTokenPathResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type getMockTokenPathResponseError = (getMockTokenPathResponse400 | getMockTokenPathResponse401 | getMockTokenPathResponse404 | getMockTokenPathResponseDefault) & {
   headers: Headers;
 };
 
-export type getMockTokenPathResponse = getMockTokenPathResponseError;
+export type getMockTokenPathResponse = (getMockTokenPathResponseError)
 
-export const getGetMockTokenPathUrl = (token: string, path: string) => {
-  return `/mock/${token}/${path}`;
-};
+export const getGetMockTokenPathUrl = (token: string,
+    path: string,) => {
+
+
+
+
+  return `/mock/${token}/${path}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -1323,85 +972,52 @@ export const getGetMockTokenPathUrl = (token: string, path: string) => {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const getMockTokenPath = async (
-  token: string,
-  path: string,
-  options?: RequestInit,
-): Promise<getMockTokenPathResponse> => {
-  const res = await fetch(getGetMockTokenPathUrl(token, path), {
+export const getMockTokenPath = async (token: string,
+    path: string, options?: Parameters<typeof fetcher>[1]): Promise<getMockTokenPathResponse> => {
+
+  return fetcher<getMockTokenPathResponse>(getGetMockTokenPathUrl(token,path),
+  {
     ...options,
-    method: "GET",
-  });
+    method: 'GET'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getMockTokenPathResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as getMockTokenPathResponse;
-};
+  }
+);}
 
-export const getGetMockTokenPathQueryKey = (token: string, path: string) => {
-  return [`/mock/${token}/${path}`] as const;
-};
 
-export const getGetMockTokenPathQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMockTokenPath>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  path: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMockTokenPath>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
+
+
+
+export const getGetMockTokenPathQueryKey = (token: string,
+    path: string,) => {
+    return [
+    `/mock/${token}/${path}`
+    ] as const;
+    }
+
+
+export const getGetMockTokenPathQueryOptions = <TData = Awaited<ReturnType<typeof getMockTokenPath>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(token: string,
+    path: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockTokenPath>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getGetMockTokenPathQueryKey(token, path);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getMockTokenPath>>
-  > = ({ signal }) =>
-    getMockTokenPath(token, path, { signal, ...fetchOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMockTokenPathQueryKey(token,path);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled:
-      token !== null &&
-      token !== undefined &&
-      path !== null &&
-      path !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMockTokenPath>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type GetMockTokenPathQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMockTokenPath>>
->;
-export type GetMockTokenPathQueryError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMockTokenPath>>> = ({ signal }) => getMockTokenPath(token,path, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined && path !== null && path !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMockTokenPath>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMockTokenPathQueryResult = NonNullable<Awaited<ReturnType<typeof getMockTokenPath>>>
+export type GetMockTokenPathQueryError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -1413,38 +1029,17 @@ export type GetMockTokenPathQueryError =
  * way.
  * @summary Call a project's mock API at a path
  */
-export function useGetMockTokenPath<
-  TData = Awaited<ReturnType<typeof getMockTokenPath>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  path: string,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMockTokenPath>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export function useGetMockTokenPath<TData = Awaited<ReturnType<typeof getMockTokenPath>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(
+ token: string,
+    path: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockTokenPath>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMockTokenPath>>,
           TError,
           Awaited<ReturnType<typeof getMockTokenPath>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method and path are
@@ -1455,38 +1050,17 @@ export function useGetMockTokenPath<
  * way.
  * @summary Call a project's mock API at a path
  */
-export function useGetMockTokenPath<
-  TData = Awaited<ReturnType<typeof getMockTokenPath>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  path: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMockTokenPath>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export function useGetMockTokenPath<TData = Awaited<ReturnType<typeof getMockTokenPath>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(
+ token: string,
+    path: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockTokenPath>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMockTokenPath>>,
           TError,
           Awaited<ReturnType<typeof getMockTokenPath>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method and path are
@@ -1497,30 +1071,11 @@ export function useGetMockTokenPath<
  * way.
  * @summary Call a project's mock API at a path
  */
-export function useGetMockTokenPath<
-  TData = Awaited<ReturnType<typeof getMockTokenPath>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  path: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMockTokenPath>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetMockTokenPath<TData = Awaited<ReturnType<typeof getMockTokenPath>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(
+ token: string,
+    path: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockTokenPath>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method and path are
@@ -1531,73 +1086,59 @@ export function useGetMockTokenPath<
  * way.
  * @summary Call a project's mock API at a path
  */
-export function useGetMockTokenPath<
-  TData = Awaited<ReturnType<typeof getMockTokenPath>>,
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
->(
-  token: string,
-  path: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMockTokenPath>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMockTokenPathQueryOptions(token, path, options);
+export function useGetMockTokenPath<TData = Awaited<ReturnType<typeof getMockTokenPath>>, TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse>(
+ token: string,
+    path: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMockTokenPath>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMockTokenPathQueryOptions(token,path,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+
+
+
+
+
 export type postMockTokenPathResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+  data: MockFailureResponse
+  status: 400
+}
 
 export type postMockTokenPathResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type postMockTokenPathResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type postMockTokenPathResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type postMockTokenPathResponseError = (
-  | postMockTokenPathResponse400
-  | postMockTokenPathResponse401
-  | postMockTokenPathResponse404
-  | postMockTokenPathResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type postMockTokenPathResponseError = (postMockTokenPathResponse400 | postMockTokenPathResponse401 | postMockTokenPathResponse404 | postMockTokenPathResponseDefault) & {
   headers: Headers;
 };
 
-export type postMockTokenPathResponse = postMockTokenPathResponseError;
+export type postMockTokenPathResponse = (postMockTokenPathResponseError)
 
-export const getPostMockTokenPathUrl = (token: string, path: string) => {
-  return `/mock/${token}/${path}`;
-};
+export const getPostMockTokenPathUrl = (token: string,
+    path: string,) => {
+
+
+
+
+  return `/mock/${token}/${path}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -1609,86 +1150,57 @@ export const getPostMockTokenPathUrl = (token: string, path: string) => {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const postMockTokenPath = async (
-  token: string,
-  path: string,
-  options?: RequestInit,
-): Promise<postMockTokenPathResponse> => {
-  const res = await fetch(getPostMockTokenPathUrl(token, path), {
+export const postMockTokenPath = async (token: string,
+    path: string, options?: Parameters<typeof fetcher>[1]): Promise<postMockTokenPathResponse> => {
+
+  return fetcher<postMockTokenPathResponse>(getPostMockTokenPathUrl(token,path),
+  {
     ...options,
-    method: "POST",
-  });
+    method: 'POST'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postMockTokenPathResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postMockTokenPathResponse;
-};
+  }
+);}
 
-export const getPostMockTokenPathMutationKey = () =>
-  ["postMockTokenPath"] as const;
 
-export const getPostMockTokenPathMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postMockTokenPath>>,
-    TError,
-    PostMockTokenPathMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postMockTokenPath>>,
-  TError,
-  PostMockTokenPathMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostMockTokenPathMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postMockTokenPath>>,
-    PostMockTokenPathMutationVariables
-  > = (props) => {
-    const { token, path } = props ?? {};
 
-    return postMockTokenPath(token, path, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getPostMockTokenPathMutationKey = () => ['postMockTokenPath'] as const;
 
-export type PostMockTokenPathMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postMockTokenPath>>
->;
+export const getPostMockTokenPathMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMockTokenPath>>, TError,PostMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postMockTokenPath>>, TError,PostMockTokenPathMutationVariables, TContext> => {
 
-export type PostMockTokenPathMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type PostMockTokenPathMutationVariables = {
-  token: string;
-  path: string;
-};
+const mutationKey = getPostMockTokenPathMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postMockTokenPath>>, PostMockTokenPathMutationVariables> = (props) => {
+          const {token,path} = props ?? {};
+
+          return  postMockTokenPath(token,path,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostMockTokenPathMutationResult = NonNullable<Awaited<ReturnType<typeof postMockTokenPath>>>
+
+    export type PostMockTokenPathMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type PostMockTokenPathMutationVariables = {token: string;path: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method and path are
  * matched against the project's enabled routes, and the matched response's
@@ -1698,65 +1210,51 @@ export type PostMockTokenPathMutationVariables = {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const usePostMockTokenPath = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postMockTokenPath>>,
-      TError,
-      PostMockTokenPathMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postMockTokenPath>>,
-  TError,
-  PostMockTokenPathMutationVariables,
-  TContext
-> => {
-  return useMutation(getPostMockTokenPathMutationOptions(options), queryClient);
-};
-export type putMockTokenPathResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const usePostMockTokenPath = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMockTokenPath>>, TError,PostMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postMockTokenPath>>,
+        TError,
+        PostMockTokenPathMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostMockTokenPathMutationOptions(options), queryClient);
+    }
+    export type putMockTokenPathResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type putMockTokenPathResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type putMockTokenPathResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type putMockTokenPathResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type putMockTokenPathResponseError = (
-  | putMockTokenPathResponse400
-  | putMockTokenPathResponse401
-  | putMockTokenPathResponse404
-  | putMockTokenPathResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type putMockTokenPathResponseError = (putMockTokenPathResponse400 | putMockTokenPathResponse401 | putMockTokenPathResponse404 | putMockTokenPathResponseDefault) & {
   headers: Headers;
 };
 
-export type putMockTokenPathResponse = putMockTokenPathResponseError;
+export type putMockTokenPathResponse = (putMockTokenPathResponseError)
 
-export const getPutMockTokenPathUrl = (token: string, path: string) => {
-  return `/mock/${token}/${path}`;
-};
+export const getPutMockTokenPathUrl = (token: string,
+    path: string,) => {
+
+
+
+
+  return `/mock/${token}/${path}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -1768,83 +1266,57 @@ export const getPutMockTokenPathUrl = (token: string, path: string) => {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const putMockTokenPath = async (
-  token: string,
-  path: string,
-  options?: RequestInit,
-): Promise<putMockTokenPathResponse> => {
-  const res = await fetch(getPutMockTokenPathUrl(token, path), {
+export const putMockTokenPath = async (token: string,
+    path: string, options?: Parameters<typeof fetcher>[1]): Promise<putMockTokenPathResponse> => {
+
+  return fetcher<putMockTokenPathResponse>(getPutMockTokenPathUrl(token,path),
+  {
     ...options,
-    method: "PUT",
-  });
+    method: 'PUT'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: putMockTokenPathResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as putMockTokenPathResponse;
-};
+  }
+);}
 
-export const getPutMockTokenPathMutationKey = () =>
-  ["putMockTokenPath"] as const;
 
-export const getPutMockTokenPathMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putMockTokenPath>>,
-    TError,
-    PutMockTokenPathMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putMockTokenPath>>,
-  TError,
-  PutMockTokenPathMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPutMockTokenPathMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putMockTokenPath>>,
-    PutMockTokenPathMutationVariables
-  > = (props) => {
-    const { token, path } = props ?? {};
 
-    return putMockTokenPath(token, path, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getPutMockTokenPathMutationKey = () => ['putMockTokenPath'] as const;
 
-export type PutMockTokenPathMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putMockTokenPath>>
->;
+export const getPutMockTokenPathMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putMockTokenPath>>, TError,PutMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof putMockTokenPath>>, TError,PutMockTokenPathMutationVariables, TContext> => {
 
-export type PutMockTokenPathMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type PutMockTokenPathMutationVariables = { token: string; path: string };
+const mutationKey = getPutMockTokenPathMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putMockTokenPath>>, PutMockTokenPathMutationVariables> = (props) => {
+          const {token,path} = props ?? {};
+
+          return  putMockTokenPath(token,path,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutMockTokenPathMutationResult = NonNullable<Awaited<ReturnType<typeof putMockTokenPath>>>
+
+    export type PutMockTokenPathMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type PutMockTokenPathMutationVariables = {token: string;path: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method and path are
  * matched against the project's enabled routes, and the matched response's
@@ -1854,65 +1326,51 @@ export type PutMockTokenPathMutationVariables = { token: string; path: string };
  * way.
  * @summary Call a project's mock API at a path
  */
-export const usePutMockTokenPath = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putMockTokenPath>>,
-      TError,
-      PutMockTokenPathMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof putMockTokenPath>>,
-  TError,
-  PutMockTokenPathMutationVariables,
-  TContext
-> => {
-  return useMutation(getPutMockTokenPathMutationOptions(options), queryClient);
-};
-export type patchMockTokenPathResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const usePutMockTokenPath = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putMockTokenPath>>, TError,PutMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putMockTokenPath>>,
+        TError,
+        PutMockTokenPathMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPutMockTokenPathMutationOptions(options), queryClient);
+    }
+    export type patchMockTokenPathResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type patchMockTokenPathResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type patchMockTokenPathResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type patchMockTokenPathResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type patchMockTokenPathResponseError = (
-  | patchMockTokenPathResponse400
-  | patchMockTokenPathResponse401
-  | patchMockTokenPathResponse404
-  | patchMockTokenPathResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type patchMockTokenPathResponseError = (patchMockTokenPathResponse400 | patchMockTokenPathResponse401 | patchMockTokenPathResponse404 | patchMockTokenPathResponseDefault) & {
   headers: Headers;
 };
 
-export type patchMockTokenPathResponse = patchMockTokenPathResponseError;
+export type patchMockTokenPathResponse = (patchMockTokenPathResponseError)
 
-export const getPatchMockTokenPathUrl = (token: string, path: string) => {
-  return `/mock/${token}/${path}`;
-};
+export const getPatchMockTokenPathUrl = (token: string,
+    path: string,) => {
+
+
+
+
+  return `/mock/${token}/${path}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -1924,86 +1382,57 @@ export const getPatchMockTokenPathUrl = (token: string, path: string) => {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const patchMockTokenPath = async (
-  token: string,
-  path: string,
-  options?: RequestInit,
-): Promise<patchMockTokenPathResponse> => {
-  const res = await fetch(getPatchMockTokenPathUrl(token, path), {
+export const patchMockTokenPath = async (token: string,
+    path: string, options?: Parameters<typeof fetcher>[1]): Promise<patchMockTokenPathResponse> => {
+
+  return fetcher<patchMockTokenPathResponse>(getPatchMockTokenPathUrl(token,path),
+  {
     ...options,
-    method: "PATCH",
-  });
+    method: 'PATCH'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: patchMockTokenPathResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as patchMockTokenPathResponse;
-};
+  }
+);}
 
-export const getPatchMockTokenPathMutationKey = () =>
-  ["patchMockTokenPath"] as const;
 
-export const getPatchMockTokenPathMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof patchMockTokenPath>>,
-    TError,
-    PatchMockTokenPathMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof patchMockTokenPath>>,
-  TError,
-  PatchMockTokenPathMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPatchMockTokenPathMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof patchMockTokenPath>>,
-    PatchMockTokenPathMutationVariables
-  > = (props) => {
-    const { token, path } = props ?? {};
 
-    return patchMockTokenPath(token, path, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getPatchMockTokenPathMutationKey = () => ['patchMockTokenPath'] as const;
 
-export type PatchMockTokenPathMutationResult = NonNullable<
-  Awaited<ReturnType<typeof patchMockTokenPath>>
->;
+export const getPatchMockTokenPathMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchMockTokenPath>>, TError,PatchMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof patchMockTokenPath>>, TError,PatchMockTokenPathMutationVariables, TContext> => {
 
-export type PatchMockTokenPathMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type PatchMockTokenPathMutationVariables = {
-  token: string;
-  path: string;
-};
+const mutationKey = getPatchMockTokenPathMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchMockTokenPath>>, PatchMockTokenPathMutationVariables> = (props) => {
+          const {token,path} = props ?? {};
+
+          return  patchMockTokenPath(token,path,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PatchMockTokenPathMutationResult = NonNullable<Awaited<ReturnType<typeof patchMockTokenPath>>>
+
+    export type PatchMockTokenPathMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type PatchMockTokenPathMutationVariables = {token: string;path: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method and path are
  * matched against the project's enabled routes, and the matched response's
@@ -2013,68 +1442,51 @@ export type PatchMockTokenPathMutationVariables = {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const usePatchMockTokenPath = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof patchMockTokenPath>>,
-      TError,
-      PatchMockTokenPathMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof patchMockTokenPath>>,
-  TError,
-  PatchMockTokenPathMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPatchMockTokenPathMutationOptions(options),
-    queryClient,
-  );
-};
-export type deleteMockTokenPathResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const usePatchMockTokenPath = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchMockTokenPath>>, TError,PatchMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof patchMockTokenPath>>,
+        TError,
+        PatchMockTokenPathMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPatchMockTokenPathMutationOptions(options), queryClient);
+    }
+    export type deleteMockTokenPathResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type deleteMockTokenPathResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type deleteMockTokenPathResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type deleteMockTokenPathResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type deleteMockTokenPathResponseError = (
-  | deleteMockTokenPathResponse400
-  | deleteMockTokenPathResponse401
-  | deleteMockTokenPathResponse404
-  | deleteMockTokenPathResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type deleteMockTokenPathResponseError = (deleteMockTokenPathResponse400 | deleteMockTokenPathResponse401 | deleteMockTokenPathResponse404 | deleteMockTokenPathResponseDefault) & {
   headers: Headers;
 };
 
-export type deleteMockTokenPathResponse = deleteMockTokenPathResponseError;
+export type deleteMockTokenPathResponse = (deleteMockTokenPathResponseError)
 
-export const getDeleteMockTokenPathUrl = (token: string, path: string) => {
-  return `/mock/${token}/${path}`;
-};
+export const getDeleteMockTokenPathUrl = (token: string,
+    path: string,) => {
+
+
+
+
+  return `/mock/${token}/${path}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -2086,88 +1498,57 @@ export const getDeleteMockTokenPathUrl = (token: string, path: string) => {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const deleteMockTokenPath = async (
-  token: string,
-  path: string,
-  options?: RequestInit,
-): Promise<deleteMockTokenPathResponse> => {
-  const res = await fetch(getDeleteMockTokenPathUrl(token, path), {
+export const deleteMockTokenPath = async (token: string,
+    path: string, options?: Parameters<typeof fetcher>[1]): Promise<deleteMockTokenPathResponse> => {
+
+  return fetcher<deleteMockTokenPathResponse>(getDeleteMockTokenPathUrl(token,path),
+  {
     ...options,
-    method: "DELETE",
-  });
+    method: 'DELETE'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: deleteMockTokenPathResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as deleteMockTokenPathResponse;
-};
+  }
+);}
 
-export const getDeleteMockTokenPathMutationKey = () =>
-  ["deleteMockTokenPath"] as const;
 
-export const getDeleteMockTokenPathMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteMockTokenPath>>,
-    TError,
-    DeleteMockTokenPathMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteMockTokenPath>>,
-  TError,
-  DeleteMockTokenPathMutationVariables,
-  TContext
-> => {
-  const mutationKey = getDeleteMockTokenPathMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteMockTokenPath>>,
-    DeleteMockTokenPathMutationVariables
-  > = (props) => {
-    const { token, path } = props ?? {};
 
-    return deleteMockTokenPath(token, path, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getDeleteMockTokenPathMutationKey = () => ['deleteMockTokenPath'] as const;
 
-export type DeleteMockTokenPathMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteMockTokenPath>>
->;
+export const getDeleteMockTokenPathMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMockTokenPath>>, TError,DeleteMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMockTokenPath>>, TError,DeleteMockTokenPathMutationVariables, TContext> => {
 
-export type DeleteMockTokenPathMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type DeleteMockTokenPathMutationVariables = {
-  token: string;
-  path: string;
-};
+const mutationKey = getDeleteMockTokenPathMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMockTokenPath>>, DeleteMockTokenPathMutationVariables> = (props) => {
+          const {token,path} = props ?? {};
+
+          return  deleteMockTokenPath(token,path,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMockTokenPathMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMockTokenPath>>>
+
+    export type DeleteMockTokenPathMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type DeleteMockTokenPathMutationVariables = {token: string;path: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method and path are
  * matched against the project's enabled routes, and the matched response's
@@ -2177,68 +1558,51 @@ export type DeleteMockTokenPathMutationVariables = {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const useDeleteMockTokenPath = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteMockTokenPath>>,
-      TError,
-      DeleteMockTokenPathMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteMockTokenPath>>,
-  TError,
-  DeleteMockTokenPathMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getDeleteMockTokenPathMutationOptions(options),
-    queryClient,
-  );
-};
-export type headMockTokenPathResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const useDeleteMockTokenPath = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMockTokenPath>>, TError,DeleteMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMockTokenPath>>,
+        TError,
+        DeleteMockTokenPathMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteMockTokenPathMutationOptions(options), queryClient);
+    }
+    export type headMockTokenPathResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type headMockTokenPathResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type headMockTokenPathResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type headMockTokenPathResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type headMockTokenPathResponseError = (
-  | headMockTokenPathResponse400
-  | headMockTokenPathResponse401
-  | headMockTokenPathResponse404
-  | headMockTokenPathResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type headMockTokenPathResponseError = (headMockTokenPathResponse400 | headMockTokenPathResponse401 | headMockTokenPathResponse404 | headMockTokenPathResponseDefault) & {
   headers: Headers;
 };
 
-export type headMockTokenPathResponse = headMockTokenPathResponseError;
+export type headMockTokenPathResponse = (headMockTokenPathResponseError)
 
-export const getHeadMockTokenPathUrl = (token: string, path: string) => {
-  return `/mock/${token}/${path}`;
-};
+export const getHeadMockTokenPathUrl = (token: string,
+    path: string,) => {
+
+
+
+
+  return `/mock/${token}/${path}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -2250,86 +1614,57 @@ export const getHeadMockTokenPathUrl = (token: string, path: string) => {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const headMockTokenPath = async (
-  token: string,
-  path: string,
-  options?: RequestInit,
-): Promise<headMockTokenPathResponse> => {
-  const res = await fetch(getHeadMockTokenPathUrl(token, path), {
+export const headMockTokenPath = async (token: string,
+    path: string, options?: Parameters<typeof fetcher>[1]): Promise<headMockTokenPathResponse> => {
+
+  return fetcher<headMockTokenPathResponse>(getHeadMockTokenPathUrl(token,path),
+  {
     ...options,
-    method: "HEAD",
-  });
+    method: 'HEAD'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: headMockTokenPathResponse["data"] = body ? JSON.parse(body) : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as headMockTokenPathResponse;
-};
+  }
+);}
 
-export const getHeadMockTokenPathMutationKey = () =>
-  ["headMockTokenPath"] as const;
 
-export const getHeadMockTokenPathMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof headMockTokenPath>>,
-    TError,
-    HeadMockTokenPathMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof headMockTokenPath>>,
-  TError,
-  HeadMockTokenPathMutationVariables,
-  TContext
-> => {
-  const mutationKey = getHeadMockTokenPathMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof headMockTokenPath>>,
-    HeadMockTokenPathMutationVariables
-  > = (props) => {
-    const { token, path } = props ?? {};
 
-    return headMockTokenPath(token, path, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getHeadMockTokenPathMutationKey = () => ['headMockTokenPath'] as const;
 
-export type HeadMockTokenPathMutationResult = NonNullable<
-  Awaited<ReturnType<typeof headMockTokenPath>>
->;
+export const getHeadMockTokenPathMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof headMockTokenPath>>, TError,HeadMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof headMockTokenPath>>, TError,HeadMockTokenPathMutationVariables, TContext> => {
 
-export type HeadMockTokenPathMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type HeadMockTokenPathMutationVariables = {
-  token: string;
-  path: string;
-};
+const mutationKey = getHeadMockTokenPathMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof headMockTokenPath>>, HeadMockTokenPathMutationVariables> = (props) => {
+          const {token,path} = props ?? {};
+
+          return  headMockTokenPath(token,path,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HeadMockTokenPathMutationResult = NonNullable<Awaited<ReturnType<typeof headMockTokenPath>>>
+
+    export type HeadMockTokenPathMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type HeadMockTokenPathMutationVariables = {token: string;path: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method and path are
  * matched against the project's enabled routes, and the matched response's
@@ -2339,65 +1674,51 @@ export type HeadMockTokenPathMutationVariables = {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const useHeadMockTokenPath = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof headMockTokenPath>>,
-      TError,
-      HeadMockTokenPathMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof headMockTokenPath>>,
-  TError,
-  HeadMockTokenPathMutationVariables,
-  TContext
-> => {
-  return useMutation(getHeadMockTokenPathMutationOptions(options), queryClient);
-};
-export type optionsMockTokenPathResponse400 = {
-  data: MockFailureResponse;
-  status: 400;
-};
+export const useHeadMockTokenPath = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof headMockTokenPath>>, TError,HeadMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof headMockTokenPath>>,
+        TError,
+        HeadMockTokenPathMutationVariables,
+        TContext
+      > => {
+      return useMutation(getHeadMockTokenPathMutationOptions(options), queryClient);
+    }
+    export type optionsMockTokenPathResponse400 = {
+  data: MockFailureResponse
+  status: 400
+}
 
 export type optionsMockTokenPathResponse401 = {
-  data: MockUnauthorizedResponse;
-  status: 401;
-};
+  data: MockUnauthorizedResponse
+  status: 401
+}
 
 export type optionsMockTokenPathResponse404 = {
-  data: MockNotFoundResponse;
-  status: 404;
-};
+  data: MockNotFoundResponse
+  status: 404
+}
 
 export type optionsMockTokenPathResponseDefault = {
-  data: MockSuccessResponse;
-  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>;
-};
-export type optionsMockTokenPathResponseError = (
-  | optionsMockTokenPathResponse400
-  | optionsMockTokenPathResponse401
-  | optionsMockTokenPathResponse404
-  | optionsMockTokenPathResponseDefault
-) & {
+  data: MockSuccessResponse
+  status: Exclude<HTTPStatusCodes, 400 | 401 | 404>
+}
+
+;
+export type optionsMockTokenPathResponseError = (optionsMockTokenPathResponse400 | optionsMockTokenPathResponse401 | optionsMockTokenPathResponse404 | optionsMockTokenPathResponseDefault) & {
   headers: Headers;
 };
 
-export type optionsMockTokenPathResponse = optionsMockTokenPathResponseError;
+export type optionsMockTokenPathResponse = (optionsMockTokenPathResponseError)
 
-export const getOptionsMockTokenPathUrl = (token: string, path: string) => {
-  return `/mock/${token}/${path}`;
-};
+export const getOptionsMockTokenPathUrl = (token: string,
+    path: string,) => {
+
+
+
+
+  return `/mock/${token}/${path}`
+}
 
 /**
  * Serves the mock response configured for the matching route in the
@@ -2409,88 +1730,57 @@ export const getOptionsMockTokenPathUrl = (token: string, path: string) => {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const optionsMockTokenPath = async (
-  token: string,
-  path: string,
-  options?: RequestInit,
-): Promise<optionsMockTokenPathResponse> => {
-  const res = await fetch(getOptionsMockTokenPathUrl(token, path), {
+export const optionsMockTokenPath = async (token: string,
+    path: string, options?: Parameters<typeof fetcher>[1]): Promise<optionsMockTokenPathResponse> => {
+
+  return fetcher<optionsMockTokenPathResponse>(getOptionsMockTokenPathUrl(token,path),
+  {
     ...options,
-    method: "OPTIONS",
-  });
+    method: 'OPTIONS'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: optionsMockTokenPathResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as optionsMockTokenPathResponse;
-};
+  }
+);}
 
-export const getOptionsMockTokenPathMutationKey = () =>
-  ["optionsMockTokenPath"] as const;
 
-export const getOptionsMockTokenPathMutationOptions = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof optionsMockTokenPath>>,
-    TError,
-    OptionsMockTokenPathMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof optionsMockTokenPath>>,
-  TError,
-  OptionsMockTokenPathMutationVariables,
-  TContext
-> => {
-  const mutationKey = getOptionsMockTokenPathMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof optionsMockTokenPath>>,
-    OptionsMockTokenPathMutationVariables
-  > = (props) => {
-    const { token, path } = props ?? {};
 
-    return optionsMockTokenPath(token, path, fetchOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getOptionsMockTokenPathMutationKey = () => ['optionsMockTokenPath'] as const;
 
-export type OptionsMockTokenPathMutationResult = NonNullable<
-  Awaited<ReturnType<typeof optionsMockTokenPath>>
->;
+export const getOptionsMockTokenPathMutationOptions = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof optionsMockTokenPath>>, TError,OptionsMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof optionsMockTokenPath>>, TError,OptionsMockTokenPathMutationVariables, TContext> => {
 
-export type OptionsMockTokenPathMutationError =
-  | MockFailureResponse
-  | MockUnauthorizedResponse
-  | MockNotFoundResponse
-  | MockSuccessResponse;
-export type OptionsMockTokenPathMutationVariables = {
-  token: string;
-  path: string;
-};
+const mutationKey = getOptionsMockTokenPathMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof optionsMockTokenPath>>, OptionsMockTokenPathMutationVariables> = (props) => {
+          const {token,path} = props ?? {};
+
+          return  optionsMockTokenPath(token,path,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OptionsMockTokenPathMutationResult = NonNullable<Awaited<ReturnType<typeof optionsMockTokenPath>>>
+
+    export type OptionsMockTokenPathMutationError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse
+    export type OptionsMockTokenPathMutationVariables = {token: string;path: string}
+
+    /**
  * Serves the mock response configured for the matching route in the
  * project identified by the access token. The request method and path are
  * matched against the project's enabled routes, and the matched response's
@@ -2500,32 +1790,13 @@ export type OptionsMockTokenPathMutationVariables = {
  * way.
  * @summary Call a project's mock API at a path
  */
-export const useOptionsMockTokenPath = <
-  TError =
-    | MockFailureResponse
-    | MockUnauthorizedResponse
-    | MockNotFoundResponse
-    | MockSuccessResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof optionsMockTokenPath>>,
-      TError,
-      OptionsMockTokenPathMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof optionsMockTokenPath>>,
-  TError,
-  OptionsMockTokenPathMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getOptionsMockTokenPathMutationOptions(options),
-    queryClient,
-  );
-};
+export const useOptionsMockTokenPath = <TError = MockFailureResponse | MockUnauthorizedResponse | MockNotFoundResponse | MockSuccessResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof optionsMockTokenPath>>, TError,OptionsMockTokenPathMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof optionsMockTokenPath>>,
+        TError,
+        OptionsMockTokenPathMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOptionsMockTokenPathMutationOptions(options), queryClient);
+    }

@@ -16,7 +16,7 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { Member } from "./member";
+import type { Member } from './member';
 
 export interface MemberList {
   members: Member[];

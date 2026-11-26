@@ -23,9 +23,9 @@ export interface Project {
   /** @nullable */
   description: string | null;
   /**
-   * ID of the project this one was forked from, if any.
-   * @nullable
-   */
+     * ID of the project this one was forked from, if any.
+     * @nullable
+     */
   forkedFromId: number | null;
   createdAt: string;
   updatedAt: string;

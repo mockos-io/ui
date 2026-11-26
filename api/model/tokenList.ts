@@ -16,7 +16,7 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { Token } from "./token";
+import type { Token } from './token';
 
 export interface TokenList {
   tokens: Token[];

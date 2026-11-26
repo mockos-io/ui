@@ -16,22 +16,22 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { RouteMethodProperty } from "./routeMethodProperty";
+import type { RouteMethodProperty } from './routeMethodProperty';
 
 export interface Route {
   id: number;
   name: string;
   /**
-   * HTTP method. `null` for folders.
-   * @nullable
-   */
+     * HTTP method. `null` for folders.
+     * @nullable
+     */
   method?: RouteMethodProperty;
   /**
-   * Path of the mocked endpoint, starting with `/` and using `{name}`
-   * for path parameters, for example `/users/{id}`. `null` for folders.
-   * @nullable
-   * @pattern ^/([a-zA-Z0-9{}_-]+)*(/[a-zA-Z0-9{}_-]+)*$
-   */
+     * Path of the mocked endpoint, starting with `/` and using `{name}`
+     * for path parameters, for example `/users/{id}`. `null` for folders.
+     * @nullable
+     * @pattern ^/([a-zA-Z0-9{}_-]+)*(/[a-zA-Z0-9{}_-]+)*$
+     */
   endpoint?: string | null;
   /** Whether calls to this route are served. */
   enabled: boolean;
@@ -39,9 +39,9 @@ export interface Route {
   order: number;
   folder: boolean;
   /**
-   * ID of the containing folder, if any.
-   * @nullable
-   */
+     * ID of the containing folder, if any.
+     * @nullable
+     */
   parentFolderId?: number | null;
   projectId: number;
   /** Routes and folders inside this folder. */

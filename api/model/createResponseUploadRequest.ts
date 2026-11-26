@@ -21,9 +21,9 @@ export interface CreateResponseUploadRequest {
   /** @maxLength 200 */
   name: string;
   /**
-   * @minimum 100
-   * @maximum 599
-   */
+     * @minimum 100
+     * @maximum 599
+     */
   status: number;
   enabled: boolean;
   /** Response body as text or as an uploaded file, up to 10 MB. */

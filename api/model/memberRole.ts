@@ -22,10 +22,11 @@
  * - `EDITOR` can create and change routes and responses.
  * - `VIEWER` can only look at the project.
  */
-export type MemberRole = (typeof MemberRole)[keyof typeof MemberRole];
+export type MemberRole = typeof MemberRole[keyof typeof MemberRole];
+
 
 export const MemberRole = {
-  ADMIN: "ADMIN",
-  EDITOR: "EDITOR",
-  VIEWER: "VIEWER",
+  ADMIN: 'ADMIN',
+  EDITOR: 'EDITOR',
+  VIEWER: 'VIEWER',
 } as const;

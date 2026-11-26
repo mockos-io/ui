@@ -16,7 +16,7 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { RouteMethod } from "./routeMethod";
+import type { RouteMethod } from './routeMethod';
 
 export interface EditEndpointRouteRequest {
   name: string;

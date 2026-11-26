@@ -21,15 +21,15 @@ export interface Response {
   id: number;
   name: string;
   /**
-   * HTTP status code the route returns.
-   * @minimum 100
-   * @maximum 599
-   */
+     * HTTP status code the route returns.
+     * @minimum 100
+     * @maximum 599
+     */
   status: number;
   /**
-   * Response body. When `file` is `true`, the body is served from the
-   * uploaded file instead.
-   */
+     * Response body. When `file` is `true`, the body is served from the
+     * uploaded file instead.
+     */
   body: string;
   /** Whether the body is an uploaded file. */
   file: boolean;

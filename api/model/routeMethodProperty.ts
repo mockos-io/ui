@@ -21,14 +21,13 @@
  * HTTP method. `null` for folders.
  * @nullable
  */
-export type RouteMethodProperty =
-  | (typeof RouteMethodProperty)[keyof typeof RouteMethodProperty]
-  | null;
+export type RouteMethodProperty = typeof RouteMethodProperty[keyof typeof RouteMethodProperty] | null;
+
 
 export const RouteMethodProperty = {
-  GET: "GET",
-  POST: "POST",
-  DELETE: "DELETE",
-  PATCH: "PATCH",
-  PUT: "PUT",
+  GET: 'GET',
+  POST: 'POST',
+  DELETE: 'DELETE',
+  PATCH: 'PATCH',
+  PUT: 'PUT',
 } as const;
