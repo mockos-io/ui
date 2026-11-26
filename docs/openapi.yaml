@@ -50,16 +50,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterRequest'
+              $ref: "#/components/schemas/RegisterRequest"
       responses:
-        '200':
+        "200":
           description: The account was created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
   /auth/send-verify:
     post:
       tags: [Auth]
@@ -71,16 +71,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailRequest'
+              $ref: "#/components/schemas/EmailRequest"
       responses:
-        '200':
+        "200":
           description: The request was accepted.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
   /auth/verify:
     post:
       tags: [Auth]
@@ -92,22 +92,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VerifyTokenRequest'
+              $ref: "#/components/schemas/VerifyTokenRequest"
       responses:
-        '200':
+        "200":
           description: The account was verified.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
+                $ref: "#/components/schemas/AuthToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
           description: The verification token is invalid or expired.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /auth/login:
     post:
       tags: [Auth]
@@ -119,28 +119,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: Logged in.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
+                $ref: "#/components/schemas/AuthToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
           description: The email or password is incorrect.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '403':
+                $ref: "#/components/schemas/Error"
+        "403":
           description: The account has not been verified yet.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /auth/send-reset:
     post:
       tags: [Auth]
@@ -152,16 +152,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailRequest'
+              $ref: "#/components/schemas/EmailRequest"
       responses:
-        '200':
+        "200":
           description: The request was accepted.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
   /auth/reset:
     post:
       tags: [Auth]
@@ -173,22 +173,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResetRequest'
+              $ref: "#/components/schemas/ResetRequest"
       responses:
-        '200':
+        "200":
           description: The password was reset.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
+                $ref: "#/components/schemas/AuthToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
           description: The reset token is invalid or expired.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /auth/glogin:
     get:
       tags: [Auth]
@@ -196,12 +196,12 @@ paths:
       description: Returns the Google authorization URL to redirect the user to.
       security: []
       responses:
-        '200':
+        "200":
           description: The authorization URL.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GoogleLoginUrl'
+                $ref: "#/components/schemas/GoogleLoginUrl"
     post:
       tags: [Auth]
       summary: Finish a Google login
@@ -212,22 +212,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GoogleLoginRequest'
+              $ref: "#/components/schemas/GoogleLoginRequest"
       responses:
-        '200':
+        "200":
           description: Logged in.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
+                $ref: "#/components/schemas/AuthToken"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
           description: The Google authorization code is invalid.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /projects:
     get:
@@ -235,22 +235,22 @@ paths:
       summary: List your projects
       description: Returns the projects you are a verified member of, paginated.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/OrderBy'
-        - $ref: '#/components/parameters/Direction'
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/OrderBy"
+        - $ref: "#/components/parameters/Direction"
       responses:
-        '200':
+        "200":
           description: A page of projects.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProjectList'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/ProjectList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags: [Projects]
       summary: Create a project
@@ -260,63 +260,63 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateProjectRequest'
+              $ref: "#/components/schemas/CreateProjectRequest"
       responses:
-        '200':
+        "200":
           description: The created project.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Project'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/Project"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /projects/{projectId}:
     put:
       tags: [Projects]
       summary: Update a project
       description: Updates a project's details. Only administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
+        - $ref: "#/components/parameters/ProjectId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateProjectRequest'
+              $ref: "#/components/schemas/CreateProjectRequest"
       responses:
-        '200':
+        "200":
           description: The updated project.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Project'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Project"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags: [Projects]
       summary: Leave a project
       description: Removes you from the project. If you are the last member, the project is deleted.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
+        - $ref: "#/components/parameters/ProjectId"
       responses:
-        '200':
+        "200":
           description: You left the project.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /projects/{projectId}/members:
     get:
@@ -324,99 +324,99 @@ paths:
       summary: List project members
       description: Returns the members of a project, paginated and searchable by name.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Search'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Search"
       responses:
-        '200':
+        "200":
           description: A page of members.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MemberList'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/MemberList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags: [Members]
       summary: Invite a member
       description: Invites an existing verified user to the project with the given role. Only administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
+        - $ref: "#/components/parameters/ProjectId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InviteMemberRequest'
+              $ref: "#/components/schemas/InviteMemberRequest"
       responses:
-        '200':
+        "200":
           description: The created membership, pending acceptance.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Member'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Member"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /projects/{projectId}/members/{memberId}:
     put:
       tags: [Members]
       summary: Change a member's role
       description: Updates the role of a project member. Only administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/MemberId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MemberId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EditMemberRequest'
+              $ref: "#/components/schemas/EditMemberRequest"
       responses:
-        '200':
+        "200":
           description: The updated membership.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Member'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Member"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags: [Members]
       summary: Remove a member
       description: Removes a member from the project. Only administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/MemberId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MemberId"
       responses:
-        '200':
+        "200":
           description: The member was removed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /projects/{projectId}/tokens:
     get:
@@ -424,77 +424,77 @@ paths:
       summary: List access tokens
       description: Returns the project's access tokens, paginated and searchable by name. Only administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/OrderBy'
-        - $ref: '#/components/parameters/Direction'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/OrderBy"
+        - $ref: "#/components/parameters/Direction"
       responses:
-        '200':
+        "200":
           description: A page of access tokens.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenList'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TokenList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags: [Access Tokens]
       summary: Create an access token
       description: Creates an access token for the project. Only administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
+        - $ref: "#/components/parameters/ProjectId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateTokenRequest'
+              $ref: "#/components/schemas/CreateTokenRequest"
       responses:
-        '200':
+        "200":
           description: The created access token.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Token'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/Token"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /projects/{projectId}/tokens/{tokenId}:
     delete:
       tags: [Access Tokens]
       summary: Delete an access token
       description: Revokes the access token. Its mock URLs stop working immediately. Only administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/TokenId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TokenId"
       responses:
-        '200':
+        "200":
           description: The access token was deleted.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /projects/{projectId}/contracts:
     post:
@@ -511,28 +511,28 @@ paths:
         - `MERGE` adds the contract's routes that the project does not have yet
           and adds the contract's responses to matching existing routes.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
+        - $ref: "#/components/parameters/ProjectId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ImportContractRequest'
+              $ref: "#/components/schemas/ImportContractRequest"
       responses:
-        '200':
+        "200":
           description: The contract was imported.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /projects/{projectId}/routes:
     get:
@@ -540,20 +540,20 @@ paths:
       summary: List routes
       description: Returns the project's top-level routes and folders, in display order. Each folder includes its children.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
+        - $ref: "#/components/parameters/ProjectId"
       responses:
-        '200':
+        "200":
           description: The project's routes.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Route'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                  $ref: "#/components/schemas/Route"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags: [Routes]
       summary: Create a route or folder
@@ -564,30 +564,30 @@ paths:
         Send `folder: false` to create an endpoint route, or `folder: true` with
         a name to create a folder. A folder cannot contain another folder.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
+        - $ref: "#/components/parameters/ProjectId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRouteRequest'
+              $ref: "#/components/schemas/CreateRouteRequest"
       responses:
-        '200':
+        "200":
           description: The created route or folder.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Route'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/Route"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /projects/{projectId}/routes/realtime:
     get:
       tags: [Routes]
@@ -597,9 +597,9 @@ paths:
         top-level routes and folders; every following event contains the full
         updated list whenever the project's routes change.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
+        - $ref: "#/components/parameters/ProjectId"
       responses:
-        '200':
+        "200":
           description: A stream of route snapshots.
           content:
             text/event-stream:
@@ -610,59 +610,59 @@ paths:
                   routes, identical in shape to `GET /projects/{projectId}/routes`.
                 example: |
                   data: [{"id":1,"name":"Users","folder":false,"method":"GET","endpoint":"/users","enabled":true,"order":1,"projectId":1,"parentFolderId":null,"createdAt":"2026-01-01T00:00:00.000Z","updatedAt":"2026-01-01T00:00:00.000Z"}]
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /projects/{projectId}/routes/{routeId}:
     put:
       tags: [Routes]
       summary: Update a route or folder
       description: Updates a mock endpoint or renames a folder. Only editors and administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EditRouteRequest'
+              $ref: "#/components/schemas/EditRouteRequest"
       responses:
-        '200':
+        "200":
           description: The updated route or folder.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Route'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Route"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags: [Routes]
       summary: Delete a route or folder
       description: Deletes a route or folder and everything inside it. Only editors and administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
       responses:
-        '200':
+        "200":
           description: The route or folder was deleted.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /projects/{projectId}/routes/{routeId}/sort:
     post:
       tags: [Routes]
@@ -675,29 +675,29 @@ paths:
         before another route or folder, or neither to place it at the end. A
         folder cannot be moved into another folder.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SortRouteRequest'
+              $ref: "#/components/schemas/SortRouteRequest"
       responses:
-        '200':
+        "200":
           description: The route or folder was moved.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /projects/{projectId}/routes/{routeId}/responses:
     get:
@@ -705,21 +705,21 @@ paths:
       summary: List responses
       description: Returns all responses configured for a route.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
       responses:
-        '200':
+        "200":
           description: The route's responses.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Response'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                  $ref: "#/components/schemas/Response"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags: [Responses]
       summary: Create a response
@@ -729,34 +729,34 @@ paths:
         The body can be plain text sent as JSON, or a file uploaded as
         `multipart/form-data` (up to 10 MB).
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateResponseRequest'
+              $ref: "#/components/schemas/CreateResponseRequest"
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateResponseUploadRequest'
+              $ref: "#/components/schemas/CreateResponseUploadRequest"
       responses:
-        '200':
+        "200":
           description: The created response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/Response"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /projects/{projectId}/routes/{routeId}/responses/realtime:
     get:
       tags: [Responses]
@@ -766,10 +766,10 @@ paths:
         current responses; every following event contains the full updated list
         whenever they change.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
       responses:
-        '200':
+        "200":
           description: A stream of response snapshots.
           content:
             text/event-stream:
@@ -781,10 +781,10 @@ paths:
                   `GET /projects/{projectId}/routes/{routeId}/responses`.
                 example: |
                   data: [{"id":1,"name":"Success","status":200,"body":"{\"ok\":true}","file":false,"enabled":true,"routeId":1,"createdAt":"2026-01-01T00:00:00.000Z","updatedAt":"2026-01-01T00:00:00.000Z"}]
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /projects/{projectId}/routes/{routeId}/responses/{responseId}:
     put:
       tags: [Responses]
@@ -796,56 +796,56 @@ paths:
         Send the body as JSON for plain text, or upload a file with
         `multipart/form-data` (up to 10 MB) to replace it.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
-        - $ref: '#/components/parameters/ResponseId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
+        - $ref: "#/components/parameters/ResponseId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EditResponseRequest'
+              $ref: "#/components/schemas/EditResponseRequest"
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EditResponseUploadRequest'
+              $ref: "#/components/schemas/EditResponseUploadRequest"
       responses:
-        '200':
+        "200":
           description: The updated response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/Response"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
     delete:
       tags: [Responses]
       summary: Delete a response
       description: Deletes a response from a route. Only editors and administrators can do this.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
-        - $ref: '#/components/parameters/ResponseId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
+        - $ref: "#/components/parameters/ResponseId"
       responses:
-        '200':
+        "200":
           description: The response was deleted.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /projects/{projectId}/routes/{routeId}/responses/{responseId}/code:
     get:
@@ -853,24 +853,24 @@ paths:
       summary: Get a response's custom code
       description: Returns the custom code attached to a response.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
-        - $ref: '#/components/parameters/ResponseId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
+        - $ref: "#/components/parameters/ResponseId"
       responses:
-        '200':
+        "200":
           description: The response's custom code.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CustomCode'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
+                $ref: "#/components/schemas/CustomCode"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
           description: The project, route, response or custom code was not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     put:
       tags: [Response Code]
       summary: Set a response's custom code
@@ -882,30 +882,30 @@ paths:
         receives the request's path parameters, query parameters, body, URL and
         headers. The value it returns is sent as the response body.
       parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/RouteId'
-        - $ref: '#/components/parameters/ResponseId'
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/RouteId"
+        - $ref: "#/components/parameters/ResponseId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCustomCodeRequest'
+              $ref: "#/components/schemas/UpdateCustomCodeRequest"
       responses:
-        '200':
+        "200":
           description: The saved custom code.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CustomCode'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/CustomCode"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /mock/{token}:
     get: &mockRoot
@@ -921,16 +921,16 @@ paths:
         way.
       security: []
       parameters:
-        - $ref: '#/components/parameters/MockToken'
+        - $ref: "#/components/parameters/MockToken"
       responses:
-        '400':
-          $ref: '#/components/responses/MockFailure'
-        '401':
-          $ref: '#/components/responses/MockUnauthorized'
-        '404':
-          $ref: '#/components/responses/MockNotFound'
+        "400":
+          $ref: "#/components/responses/MockFailure"
+        "401":
+          $ref: "#/components/responses/MockUnauthorized"
+        "404":
+          $ref: "#/components/responses/MockNotFound"
         default:
-          $ref: '#/components/responses/MockSuccess'
+          $ref: "#/components/responses/MockSuccess"
     post: *mockRoot
     put: *mockRoot
     patch: *mockRoot
@@ -951,17 +951,17 @@ paths:
         way.
       security: []
       parameters:
-        - $ref: '#/components/parameters/MockToken'
-        - $ref: '#/components/parameters/MockPath'
+        - $ref: "#/components/parameters/MockToken"
+        - $ref: "#/components/parameters/MockPath"
       responses:
-        '400':
-          $ref: '#/components/responses/MockFailure'
-        '401':
-          $ref: '#/components/responses/MockUnauthorized'
-        '404':
-          $ref: '#/components/responses/MockNotFound'
+        "400":
+          $ref: "#/components/responses/MockFailure"
+        "401":
+          $ref: "#/components/responses/MockUnauthorized"
+        "404":
+          $ref: "#/components/responses/MockNotFound"
         default:
-          $ref: '#/components/responses/MockSuccess'
+          $ref: "#/components/responses/MockSuccess"
     post: *mockPath
     put: *mockPath
     patch: *mockPath
@@ -1076,31 +1076,31 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Unauthorized:
       description: Authentication is missing or invalid.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Forbidden:
       description: You do not have permission to perform this action.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     NotFound:
       description: The requested resource was not found.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Conflict:
       description: The resource conflicts with existing data.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     MockSuccess:
       description: |
         The response configured for the matched route: its status code, headers
@@ -1111,19 +1111,19 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     MockUnauthorized:
       description: The access token is invalid.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     MockNotFound:
       description: No enabled route matches this method and path.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
 
   schemas:
     Error:
@@ -1214,8 +1214,7 @@ components:
 
     Project:
       type: object
-      required:
-        [id, name, description, forkedFromId, createdAt, updatedAt]
+      required: [id, name, description, forkedFromId, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -1241,7 +1240,7 @@ components:
         projects:
           type: array
           items:
-            $ref: '#/components/schemas/Project'
+            $ref: "#/components/schemas/Project"
         total:
           type: integer
           description: Total number of matching projects.
@@ -1274,7 +1273,7 @@ components:
         projectId:
           type: integer
         role:
-          $ref: '#/components/schemas/MemberRole'
+          $ref: "#/components/schemas/MemberRole"
         verified:
           type: boolean
           description: Whether the member has accepted their invitation.
@@ -1294,7 +1293,7 @@ components:
         members:
           type: array
           items:
-            $ref: '#/components/schemas/Member'
+            $ref: "#/components/schemas/Member"
         total:
           type: integer
           description: Total number of matching members.
@@ -1307,13 +1306,13 @@ components:
           format: email
           description: Email of an existing, verified user.
         role:
-          $ref: '#/components/schemas/MemberRole'
+          $ref: "#/components/schemas/MemberRole"
     EditMemberRequest:
       type: object
       required: [role]
       properties:
         role:
-          $ref: '#/components/schemas/MemberRole'
+          $ref: "#/components/schemas/MemberRole"
 
     Token:
       type: object
@@ -1341,7 +1340,7 @@ components:
         tokens:
           type: array
           items:
-            $ref: '#/components/schemas/Token'
+            $ref: "#/components/schemas/Token"
         total:
           type: integer
           description: Total number of matching access tokens.
@@ -1365,7 +1364,7 @@ components:
           type: string
           description: OpenAPI document in YAML or JSON format.
         mode:
-          $ref: '#/components/schemas/ImportMode'
+          $ref: "#/components/schemas/ImportMode"
 
     RouteMethod:
       type: string
@@ -1390,7 +1389,7 @@ components:
           description: |
             Path of the mocked endpoint, starting with `/` and using `{name}`
             for path parameters, for example `/users/{id}`. `null` for folders.
-          pattern: '^/([a-zA-Z0-9{}_-]+)*(/[a-zA-Z0-9{}_-]+)*$'
+          pattern: "^/([a-zA-Z0-9{}_-]+)*(/[a-zA-Z0-9{}_-]+)*$"
         enabled:
           type: boolean
           description: Whether calls to this route are served.
@@ -1409,7 +1408,7 @@ components:
           type: array
           description: Routes and folders inside this folder.
           items:
-            $ref: '#/components/schemas/Route'
+            $ref: "#/components/schemas/Route"
         createdAt:
           type: string
           format: date-time
@@ -1418,8 +1417,8 @@ components:
           format: date-time
     CreateRouteRequest:
       oneOf:
-        - $ref: '#/components/schemas/CreateEndpointRouteRequest'
-        - $ref: '#/components/schemas/CreateFolderRequest'
+        - $ref: "#/components/schemas/CreateEndpointRouteRequest"
+        - $ref: "#/components/schemas/CreateFolderRequest"
     CreateEndpointRouteRequest:
       type: object
       required: [name, method, endpoint, folder, enabled]
@@ -1427,10 +1426,10 @@ components:
         name:
           type: string
         method:
-          $ref: '#/components/schemas/RouteMethod'
+          $ref: "#/components/schemas/RouteMethod"
         endpoint:
           type: string
-          pattern: '^/([a-zA-Z0-9{}_-]+)*(/[a-zA-Z0-9{}_-]+)*$'
+          pattern: "^/([a-zA-Z0-9{}_-]+)*(/[a-zA-Z0-9{}_-]+)*$"
           example: /users/{id}
         folder:
           type: boolean
@@ -1451,8 +1450,8 @@ components:
           enum: [true]
     EditRouteRequest:
       oneOf:
-        - $ref: '#/components/schemas/EditEndpointRouteRequest'
-        - $ref: '#/components/schemas/EditFolderRequest'
+        - $ref: "#/components/schemas/EditEndpointRouteRequest"
+        - $ref: "#/components/schemas/EditFolderRequest"
     EditEndpointRouteRequest:
       type: object
       required: [name, method, endpoint, enabled]
@@ -1460,10 +1459,10 @@ components:
         name:
           type: string
         method:
-          $ref: '#/components/schemas/RouteMethod'
+          $ref: "#/components/schemas/RouteMethod"
         endpoint:
           type: string
-          pattern: '^/([a-zA-Z0-9{}_-]+)*(/[a-zA-Z0-9{}_-]+)*$'
+          pattern: "^/([a-zA-Z0-9{}_-]+)*(/[a-zA-Z0-9{}_-]+)*$"
         enabled:
           type: boolean
     EditFolderRequest:
