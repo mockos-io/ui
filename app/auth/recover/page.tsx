@@ -6,12 +6,10 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { usePostAuthSendReset } from "@/api/auth";
+import type { EmailRequest } from "@/api/model";
 import Button from "@/components/Button";
 import TextInput from "@/components/TextInput";
-
-type RecoverFormValues = {
-  email: string;
-};
 
 export default function Recover() {
   const t = useTranslations();
@@ -24,13 +22,21 @@ export default function Recover() {
     register,
     handleSubmit,
     formState: { errors, isValid },
-  } = useForm<RecoverFormValues>({
+  } = useForm<EmailRequest>({
     resolver: zodResolver(recoverSchema),
     mode: "onBlur",
   });
 
-  function sendResetLink() {
-    //TODO: add logic
+  const { mutate, isPending } = usePostAuthSendReset({
+    mutation: {
+      onSuccess: () => {
+        //TODO: hacer algo
+      },
+    },
+  });
+
+  function sendResetLink(values: EmailRequest) {
+    mutate({ data: values });
   }
 
   return (
@@ -54,11 +60,12 @@ export default function Recover() {
           placeholder={t("RECOVER.EMAIL_PLACEHOLDER")}
           name="email"
           type="text"
+          disabled={isPending}
           inputProps={register("email")}
           error={errors.email?.message}
         />
 
-        <Button type="submit" disabled={!isValid}>
+        <Button type="submit" disabled={!isValid || isPending}>
           {t("RECOVER.SEND_LINK")}
           <Image
             className="h-3 w-3"

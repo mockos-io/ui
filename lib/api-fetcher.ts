@@ -1,3 +1,5 @@
+import { AUTH_TOKEN_COOKIE_KEY, getCookie } from "@/lib/cookies";
+
 export const fetcher = async <T>(
   url: string,
   options?: RequestInit,
@@ -8,7 +10,15 @@ export const fetcher = async <T>(
     throw new Error("NEXT_PUBLIC_API_URL is not configured");
   }
 
-  const response = await fetch(new URL(url, baseUrl), options);
+  const headers = new Headers(options?.headers);
+  const token = getCookie(AUTH_TOKEN_COOKIE_KEY);
+
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  const response = await fetch(new URL(url, baseUrl), {
+    ...options,
+    headers,
+  });
 
   if (!response.ok) {
     throw new Error(
@@ -17,8 +27,16 @@ export const fetcher = async <T>(
   }
 
   if ([204, 205, 304].includes(response.status)) {
-    return undefined as T;
+    return {
+      data: undefined,
+      status: response.status,
+      headers: response.headers,
+    } as T;
   }
 
-  return response.json() as Promise<T>;
+  return {
+    data: await response.json(),
+    status: response.status,
+    headers: response.headers,
+  } as T;
 };

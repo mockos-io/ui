@@ -3,9 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { usePostAuthReset } from "@/api/auth";
 import Button from "@/components/Button";
 import TextInput from "@/components/TextInput";
 
@@ -16,6 +18,9 @@ type RecoverPasswordFormValues = {
 
 export default function RecoverPassword() {
   const t = useTranslations();
+  const router = useRouter();
+
+  const { value: token } = useParams<{ value: string }>();
 
   const recoverSchema = z
     .object({
@@ -35,14 +40,25 @@ export default function RecoverPassword() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isValid },
   } = useForm<RecoverPasswordFormValues>({
     resolver: zodResolver(recoverSchema),
     mode: "onBlur",
   });
 
-  function recoverPassword() {
-    //TODO: add logic
+  const { mutate, isPending } = usePostAuthReset({
+    mutation: {
+      onSuccess: () => {
+        reset();
+
+        router.push("/auth/login");
+      },
+    },
+  });
+
+  function recoverPassword(values: RecoverPasswordFormValues) {
+    mutate({ data: { token, password: values.newPassword } });
   }
 
   return (
@@ -66,6 +82,7 @@ export default function RecoverPassword() {
           placeholder={t("RECOVER_PASSWORD.NEW_PASSWORD_PLACEHOLDER")}
           name="newPassword"
           type="password"
+          disabled={isPending}
           inputProps={register("newPassword")}
           error={errors.newPassword?.message}
         />
@@ -75,6 +92,7 @@ export default function RecoverPassword() {
           placeholder={t("RECOVER_PASSWORD.CONFIRM_NEW_PASSWORD_PLACEHOLDER")}
           name="confirmPassword"
           type="password"
+          disabled={isPending}
           inputProps={register("confirmPassword")}
           error={errors.confirmPassword?.message}
         />
@@ -90,7 +108,7 @@ export default function RecoverPassword() {
           </div>
         </div>
 
-        <Button type="submit" disabled={!isValid}>
+        <Button type="submit" disabled={!isValid || isPending}>
           {t("RECOVER_PASSWORD.RESET_PASSWORD")}
           <Image
             className="h-3 w-3"

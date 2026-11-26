@@ -1,14 +1,26 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { usePostAuthSendVerify } from "@/api/auth";
+import { useRegister } from "../context/RegisterContext";
 
 export default function Verify() {
   const t = useTranslations();
+  const { email } = useRegister();
+
+  const { mutate } = usePostAuthSendVerify({
+    mutation: {
+      onSuccess: () => {
+        //TODO: mostrar el que se ha enviado el nuevo correo
+      },
+    },
+  });
 
   function resendVerifyEmail() {
-    //TODO: add logic
+    if (!email) return;
+
+    mutate({ data: { email } });
   }
 
   return (
@@ -28,16 +40,18 @@ export default function Verify() {
         </p>
       </div>
 
-      <div className="w-full flex gap-2 text-[0.875rem] text-(--primary-color)  justify-center items-center">
-        <span>{t("VERIFY.ACCOUNT_QUESTION")}</span>
-        <Link
-          className="text-(--link-color) hover:underline"
-          href="/auth/login"
-          onClick={resendVerifyEmail}
-        >
-          {t("VERIFY.RESEND")}
-        </Link>
-      </div>
+      {email && (
+        <div className="w-full flex gap-2 text-[0.875rem] text-(--primary-color)  justify-center items-center">
+          <span>{t("VERIFY.ACCOUNT_QUESTION")}</span>
+          <button
+            className="text-(--link-color) hover:underline"
+            type="button"
+            onClick={resendVerifyEmail}
+          >
+            {t("VERIFY.RESEND")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,21 +3,22 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { usePostAuthRegister } from "@/api/auth";
+import type { RegisterRequest } from "@/api/model";
 import Button from "@/components/Button";
 import Divider from "@/components/Divider";
 import TextInput from "@/components/TextInput";
-
-type RegisterFormValues = {
-  name: string;
-  email: string;
-  password: string;
-};
+import { useRegister } from "./context/RegisterContext";
 
 export default function Register() {
   const t = useTranslations();
+  const router = useRouter();
+
+  const { setEmail } = useRegister();
 
   const signUpSchema = z.object({
     name: z.string().trim().min(1, t("COMMON.REQUIRED")),
@@ -36,13 +37,26 @@ export default function Register() {
     register,
     handleSubmit,
     formState: { errors, isValid },
-  } = useForm<RegisterFormValues>({
+  } = useForm<RegisterRequest>({
     resolver: zodResolver(signUpSchema),
     mode: "onBlur",
   });
 
-  function signUp() {
-    //TODO: add logic
+  const { mutate, isPending } = usePostAuthRegister({
+    mutation: {
+      onSuccess: (_response, variables) => {
+        setEmail(variables.data.email);
+
+        router.push("/auth/register/verify");
+      },
+      onError: () => {
+        //TODO: hacer algo para mostrarlo
+      },
+    },
+  });
+
+  function signUp(values: RegisterRequest) {
+    mutate({ data: values });
   }
 
   function singUpOAuth() {
@@ -70,6 +84,7 @@ export default function Register() {
           placeholder={t("REGISTER.NAME_PLACEHOLDER")}
           name="name"
           type="text"
+          disabled={isPending}
           inputProps={register("name")}
           error={errors.name?.message}
         />
@@ -79,6 +94,7 @@ export default function Register() {
           placeholder={t("REGISTER.EMAIL_PLACEHOLDER")}
           name="email"
           type="email"
+          disabled={isPending}
           inputProps={register("email")}
           error={errors.email?.message}
         />
@@ -88,6 +104,7 @@ export default function Register() {
           placeholder={t("REGISTER.PASSWORD_PLACEHOLDER")}
           name="password"
           type="password"
+          disabled={isPending}
           inputProps={register("password")}
           error={errors.password?.message}
         />
@@ -105,7 +122,7 @@ export default function Register() {
           </div>
         )}
 
-        <Button type="submit" disabled={!isValid}>
+        <Button type="submit" disabled={!isValid || isPending}>
           {t("REGISTER.SIGN_UP")}
           <Image
             className="h-3 w-3"
@@ -124,7 +141,7 @@ export default function Register() {
           <Divider />
         </div>
 
-        <Button variant="secondary" onClick={singUpOAuth}>
+        <Button variant="secondary" onClick={singUpOAuth} disabled={isPending}>
           <Image
             className="h-5 w-5"
             src="/google.svg"

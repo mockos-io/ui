@@ -7,14 +7,12 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { usePostAuthLogin } from "@/api/auth";
+import type { LoginRequest } from "@/api/model";
 import Button from "@/components/Button";
 import Divider from "@/components/Divider";
 import TextInput from "@/components/TextInput";
-
-type LoginFormValues = {
-  email: string;
-  password: string;
-};
+import { AUTH_TOKEN_COOKIE_KEY, setCookie } from "@/lib/cookies";
 
 export default function Login() {
   const t = useTranslations();
@@ -29,13 +27,28 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors, isValid },
-  } = useForm<LoginFormValues>({
+  } = useForm<LoginRequest>({
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
   });
 
-  function login(_values: LoginFormValues) {
-    // TODO: add logic
+  const { mutate, isPending } = usePostAuthLogin({
+    mutation: {
+      onSuccess: (response) => {
+        if (response.status !== 200) {
+          //TODO: mostrar un toast o algo
+
+          return;
+        }
+
+        setCookie(AUTH_TOKEN_COOKIE_KEY, response.data.token);
+        router.replace("/dashboard");
+      },
+    },
+  });
+
+  function login(values: LoginRequest) {
+    mutate({ data: values });
   }
 
   function loginOAuth() {
@@ -65,6 +78,7 @@ export default function Login() {
           type="email"
           inputProps={register("email")}
           error={errors.email?.message}
+          disabled={isPending}
           link={t("LOGIN.FORGOT_PASSWORD")}
           onLinkClick={() => router.push("/auth/recover")}
         />
@@ -74,11 +88,12 @@ export default function Login() {
           placeholder={t("LOGIN.PASSWORD_PLACEHOLDER")}
           name="password"
           type="password"
+          disabled={isPending}
           inputProps={register("password")}
           error={errors.password?.message}
         />
 
-        <Button type="submit" disabled={!isValid}>
+        <Button type="submit" disabled={!isValid || isPending}>
           {t("LOGIN.SIGN_IN")}
           <Image
             className="h-3 w-3"
@@ -98,7 +113,7 @@ export default function Login() {
         <Divider />
       </div>
 
-      <Button variant="secondary" onClick={loginOAuth}>
+      <Button variant="secondary" onClick={loginOAuth} disabled={isPending}>
         <Image
           className="h-5 w-5"
           src="/google.svg"
