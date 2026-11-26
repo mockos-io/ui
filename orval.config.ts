@@ -1,15 +1,15 @@
-import { defineConfig } from 'orval';
+import { defineConfig } from "orval";
 
 export default defineConfig({
   api: {
     input: {
-      target: './openapi.yaml',
+      target: "./docs/openapi.yaml",
     },
     output: {
-      mode: 'tags',
-      client: 'react-query',
-      target: './src/api/generated.ts',
-      schemas: './src/api/model',
+      mode: "tags",
+      client: "react-query",
+      target: "./api/generated.ts",
+      schemas: "./api/model",
       clean: true,
       override: {
         useTypeOverInterfaces: false,
