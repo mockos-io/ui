@@ -40,6 +40,33 @@
     "ACCOUNT_QUESTION": "Already have an account?",
     "SIGN_IN": "Sign in"
   },
+  "RECOVER": {
+    "TITLE": "Forgot password",
+    "SUBTITLE": "Enter your email to receive a password reset link.",
+    "EMAIL": "Work Email",
+    "EMAIL_PLACEHOLDER": "jane@company.com",
+    "SEND_LINK": "Send reset link",
+    "ACCOUNT_QUESTION": "Remember your password?",
+    "SIGN_IN": "Sign in"
+  },
+  "RECOVER_PASSWORD": {
+    "TITLE": "Reset password",
+    "SUBTITLE": "Please enter your new password below.",
+    "NEW_PASSWORD": "New Password",
+    "NEW_PASSWORD_PLACEHOLDER": "Enter new password",
+    "CONFIRM_NEW_PASSWORD": "Confirm",
+    "CONFIRM_NEW_PASSWORD_PLACEHOLDER": "Confirm new password",
+    "RESET_PASSWORD": "Reset password",
+    "ACCOUNT_QUESTION": "Remember your password?",
+    "SIGN_IN": "Sign in",
+    "PASSWORDS_MUST_MATCH": "Passwords must match"
+  },
+  "RECOVER_VERIFY": {
+    "TITLE": "Verify your email",
+    "SUBTITLE": "We've sent a verification link to your email\naddress. Please check your inbox and click the link\nto continue setting up your workspace.",
+    "ACCOUNT_QUESTION": "Didn't receive the email?",
+    "RESEND": "Resend"
+  },
   "TEXT_INPUT": {
     "SHOW": "Show password",
     "HIDE": "Hide password"

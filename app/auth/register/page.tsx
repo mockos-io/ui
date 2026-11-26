@@ -35,7 +35,7 @@ export default function Register() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(signUpSchema),
     mode: "onBlur",
@@ -105,7 +105,7 @@ export default function Register() {
           </div>
         )}
 
-        <Button type="submit">
+        <Button type="submit" disabled={!isValid}>
           {t("REGISTER.SIGN_UP")}
           <Image
             className="h-3 w-3"
