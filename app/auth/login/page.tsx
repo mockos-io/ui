@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useGetAuthGlogin, usePostAuthLogin } from "@/api/auth";
@@ -13,14 +13,19 @@ import type { LoginRequest } from "@/api/model";
 import Button from "@/components/Button";
 import Divider from "@/components/Divider";
 import TextInput from "@/components/TextInput";
+import { ToastType, useToast } from "@/components/Toast";
 import { AUTH_TOKEN_COOKIE_KEY, setCookie } from "@/lib/cookies";
 
 export default function Login() {
   const t = useTranslations();
   const router = useRouter();
+  const { showToast } = useToast();
 
   const loginSchema = z.object({
-    email: z.string().trim().min(1, t("COMMON.REQUIRED")),
+    email: z
+      .email(t("LOGIN.EMAIL_INVALID"))
+      .trim()
+      .min(1, t("COMMON.REQUIRED")),
     password: z.string().trim().min(1, t("COMMON.REQUIRED")),
   });
 
@@ -30,14 +35,14 @@ export default function Login() {
     formState: { errors, isValid },
   } = useForm<LoginRequest>({
     resolver: zodResolver(loginSchema),
-    mode: "onChange",
+    mode: "onTouched",
   });
 
   const { mutate, isPending } = usePostAuthLogin({
     mutation: {
       onSuccess: (response) => {
         if (response.status !== 200) {
-          //TODO: mostrar un toast o algo
+          onError();
 
           return;
         }
@@ -45,6 +50,7 @@ export default function Login() {
         setCookie(AUTH_TOKEN_COOKIE_KEY, response.data.token);
         router.replace("/dashboard");
       },
+      onError: (error) => onError(error.message),
     },
   });
 
@@ -58,6 +64,13 @@ export default function Login() {
   const isLoading = useMemo(
     () => isPending || isPendingGLogin,
     [isPending, isPendingGLogin],
+  );
+
+  const onError = useCallback(
+    (message: string = t("COMMON.ERROR")) => {
+      showToast(message, 5000, "/error.svg", ToastType.ERROR);
+    },
+    [t, showToast],
   );
 
   function login(values: LoginRequest) {

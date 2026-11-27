@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useGetAuthGlogin, usePostAuthRegister } from "@/api/auth";
@@ -13,11 +13,13 @@ import type { RegisterRequest } from "@/api/model";
 import Button from "@/components/Button";
 import Divider from "@/components/Divider";
 import TextInput from "@/components/TextInput";
+import { ToastType, useToast } from "@/components/Toast";
 import { useRegister } from "./context/RegisterContext";
 
 export default function Register() {
   const t = useTranslations();
   const router = useRouter();
+  const { showToast } = useToast();
 
   const { setEmail } = useRegister();
 
@@ -40,8 +42,15 @@ export default function Register() {
     formState: { errors, isValid },
   } = useForm<RegisterRequest>({
     resolver: zodResolver(signUpSchema),
-    mode: "onChange",
+    mode: "onTouched",
   });
+
+  const onError = useCallback(
+    (message: string = t("COMMON.ERROR")) => {
+      showToast(message, 5000, "/error.svg", ToastType.ERROR);
+    },
+    [t, showToast],
+  );
 
   const { mutate, isPending } = usePostAuthRegister({
     mutation: {
@@ -50,9 +59,7 @@ export default function Register() {
 
         router.push("/auth/register/verify");
       },
-      onError: () => {
-        //TODO: hacer algo para mostrarlo
-      },
+      onError: (error) => onError(error.message),
     },
   });
 

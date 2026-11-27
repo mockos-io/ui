@@ -1,23 +1,27 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect } from "react";
 import { usePostAuthGlogin } from "@/api/auth";
+import { ToastType, useToast } from "@/components/Toast";
 import { AUTH_TOKEN_COOKIE_KEY, setCookie } from "@/lib/cookies";
 
 export default function Google() {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
 
   const code = searchParams.get("code");
 
   const onError = useCallback(
-    (message?: string) => {
-      //TODO: do something with message
+    (message: string = t("COMMON.ERROR")) => {
+      showToast(message, 5000, "/error.svg", ToastType.ERROR);
 
       router.push("/auth/login");
     },
-    [router],
+    [t, router, showToast],
   );
 
   const { mutate } = usePostAuthGlogin({
@@ -38,13 +42,13 @@ export default function Google() {
 
   useEffect(() => {
     if (!code) {
-      onError();
+      router.push("/auth/login");
 
       return;
     }
 
     mutate({ data: { code } });
-  }, [code, mutate, onError]);
+  }, [code, mutate, router]);
 
   return null;
 }

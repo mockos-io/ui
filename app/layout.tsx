@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import QueryProvider from "@/providers/QueryProvider";
+import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -23,7 +24,9 @@ export default async function RootLayout({
     <html lang={locale}>
       <body className={geist.className}>
         <QueryProvider>
-          <NextIntlClientProvider>{children}</NextIntlClientProvider>
+          <NextIntlClientProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </NextIntlClientProvider>
         </QueryProvider>
       </body>
     </html>

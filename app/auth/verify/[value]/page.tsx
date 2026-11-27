@@ -1,21 +1,26 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect } from "react";
 import { usePostAuthVerify } from "@/api/auth";
+import { ToastType, useToast } from "@/components/Toast";
 import { AUTH_TOKEN_COOKIE_KEY, setCookie } from "@/lib/cookies";
 
 export default function VerifyWithValue() {
+  const t = useTranslations();
   const router = useRouter();
+
+  const { showToast } = useToast();
   const { value } = useParams<{ value: string }>();
 
   const onError = useCallback(
-    (message?: string) => {
-      //TODO: do something with message
+    (message: string = t("COMMON.ERROR")) => {
+      showToast(message, 5000, "/error.svg", ToastType.ERROR);
 
       router.replace("/auth/register/verify/failed");
     },
-    [router],
+    [t, showToast, router],
   );
 
   const { mutate } = usePostAuthVerify({
@@ -30,19 +35,19 @@ export default function VerifyWithValue() {
         setCookie(AUTH_TOKEN_COOKIE_KEY, response.data.token);
         router.replace("/auth/register/verify/success");
       },
-      onError: onError,
+      onError: (error) => onError(error.message),
     },
   });
 
   useEffect(() => {
     if (!value) {
-      onError();
+      router.replace("/auth/login");
 
       return;
     }
 
     mutate({ data: { token: value } });
-  }, [value, mutate, onError]);
+  }, [value, mutate, router]);
 
   return null;
 }

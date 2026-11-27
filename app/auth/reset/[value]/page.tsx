@@ -5,11 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { usePostAuthReset } from "@/api/auth";
 import Button from "@/components/Button";
 import TextInput from "@/components/TextInput";
+import { ToastType, useToast } from "@/components/Toast";
 
 type RecoverPasswordFormValues = {
   newPassword: string;
@@ -19,6 +21,7 @@ type RecoverPasswordFormValues = {
 export default function RecoverPassword() {
   const t = useTranslations();
   const router = useRouter();
+  const { showToast } = useToast();
 
   const { value: token } = useParams<{ value: string }>();
 
@@ -44,8 +47,15 @@ export default function RecoverPassword() {
     formState: { errors, isValid },
   } = useForm<RecoverPasswordFormValues>({
     resolver: zodResolver(recoverSchema),
-    mode: "onChange",
+    mode: "onTouched",
   });
+
+  const onError = useCallback(
+    (message: string = t("COMMON.ERROR")) => {
+      showToast(message, 5000, "/error.svg", ToastType.ERROR);
+    },
+    [t, showToast],
+  );
 
   const { mutate, isPending } = usePostAuthReset({
     mutation: {
@@ -54,6 +64,7 @@ export default function RecoverPassword() {
 
         router.push("/auth/login");
       },
+      onError: (error) => onError(error.message),
     },
   });
 

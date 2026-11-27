@@ -4,15 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { usePostAuthSendReset } from "@/api/auth";
 import type { EmailRequest } from "@/api/model";
 import Button from "@/components/Button";
 import TextInput from "@/components/TextInput";
+import { ToastType, useToast } from "@/components/Toast";
 
 export default function Recover() {
   const t = useTranslations();
+  const { showToast } = useToast();
 
   const recoverSchema = z.object({
     email: z.string().trim().min(1, t("COMMON.REQUIRED")),
@@ -24,14 +27,22 @@ export default function Recover() {
     formState: { errors, isValid },
   } = useForm<EmailRequest>({
     resolver: zodResolver(recoverSchema),
-    mode: "onChange",
+    mode: "onTouched",
   });
+
+  const onError = useCallback(
+    (message: string = t("COMMON.ERROR")) => {
+      showToast(message, 5000, "/error.svg", ToastType.ERROR);
+    },
+    [t, showToast],
+  );
 
   const { mutate, isPending } = usePostAuthSendReset({
     mutation: {
       onSuccess: () => {
-        //TODO: hacer algo
+        showToast(t("RECOVER.SENT"), 5000);
       },
+      onError: (error) => onError(error.message),
     },
   });
 
