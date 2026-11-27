@@ -15,7 +15,9 @@ export const fetcher = async <T>(
 
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(new URL(url, baseUrl), {
+  const fetchUrl = `${baseUrl.replace(/\/+$/, "")}/${url.replace(/^\/+/, "")}`;
+
+  const response = await fetch(fetchUrl, {
     ...options,
     headers,
   });

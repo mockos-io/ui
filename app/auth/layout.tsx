@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 export default function AuthLayout({
@@ -9,6 +10,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   const t = useTranslations();
+  const router = useRouter();
 
   return (
     <div className="grid h-full w-full grid-cols-2">
@@ -19,6 +21,7 @@ export default function AuthLayout({
           alt="Mockos"
           width={40}
           height={40}
+          onClick={() => router.push("/")}
         />
 
         <div className="flex flex-col w-full gap-4 max-w-104">
