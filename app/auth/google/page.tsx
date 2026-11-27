@@ -1,5 +1,6 @@
 "use client";
 
+import { error } from "next/dist/build/output/log";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect } from "react";
@@ -36,7 +37,7 @@ export default function Google() {
         setCookie(AUTH_TOKEN_COOKIE_KEY, response.data.token);
         router.replace("/dashboard");
       },
-      onError: onError,
+      onError: (error) => onError(error.message),
     },
   });
 
