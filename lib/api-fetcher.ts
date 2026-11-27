@@ -21,9 +21,7 @@ export const fetcher = async <T>(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `API request failed: ${response.status} ${response.statusText}`,
-    );
+    throw await response.json().catch(() => undefined);
   }
 
   if ([204, 205, 304].includes(response.status)) {
