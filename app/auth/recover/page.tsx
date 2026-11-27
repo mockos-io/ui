@@ -24,7 +24,7 @@ export default function Recover() {
     formState: { errors, isValid },
   } = useForm<EmailRequest>({
     resolver: zodResolver(recoverSchema),
-    mode: "onBlur",
+    mode: "onChange",
   });
 
   const { mutate, isPending } = usePostAuthSendReset({

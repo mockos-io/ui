@@ -44,7 +44,7 @@ export default function RecoverPassword() {
     formState: { errors, isValid },
   } = useForm<RecoverPasswordFormValues>({
     resolver: zodResolver(recoverSchema),
-    mode: "onBlur",
+    mode: "onChange",
   });
 
   const { mutate, isPending } = usePostAuthReset({

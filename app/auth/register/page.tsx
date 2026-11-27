@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { usePostAuthRegister } from "@/api/auth";
+import { useGetAuthGlogin, usePostAuthRegister } from "@/api/auth";
 import type { RegisterRequest } from "@/api/model";
 import Button from "@/components/Button";
 import Divider from "@/components/Divider";
@@ -39,7 +40,7 @@ export default function Register() {
     formState: { errors, isValid },
   } = useForm<RegisterRequest>({
     resolver: zodResolver(signUpSchema),
-    mode: "onBlur",
+    mode: "onChange",
   });
 
   const { mutate, isPending } = usePostAuthRegister({
@@ -55,12 +56,36 @@ export default function Register() {
     },
   });
 
+  const { refetch: startGoogleLogin, isFetching: isPendingGLogin } =
+    useGetAuthGlogin({
+      query: {
+        enabled: false,
+      },
+    });
+
+  const isLoading = useMemo(
+    () => isPending || isPendingGLogin,
+    [isPending, isPendingGLogin],
+  );
+
   function signUp(values: RegisterRequest) {
     mutate({ data: values });
   }
 
-  function singUpOAuth() {
-    //TODO: add logic
+  async function singUpOAuth() {
+    const authTab = window.open("about:blank", "_blank");
+
+    try {
+      const { data: response } = await startGoogleLogin();
+
+      if (response && authTab) {
+        authTab.location.href = response.data.url;
+      } else {
+        authTab?.close();
+      }
+    } catch {
+      authTab?.close();
+    }
   }
 
   return (
@@ -84,7 +109,7 @@ export default function Register() {
           placeholder={t("REGISTER.NAME_PLACEHOLDER")}
           name="name"
           type="text"
-          disabled={isPending}
+          disabled={isLoading}
           inputProps={register("name")}
           error={errors.name?.message}
         />
@@ -94,7 +119,7 @@ export default function Register() {
           placeholder={t("REGISTER.EMAIL_PLACEHOLDER")}
           name="email"
           type="email"
-          disabled={isPending}
+          disabled={isLoading}
           inputProps={register("email")}
           error={errors.email?.message}
         />
@@ -104,7 +129,7 @@ export default function Register() {
           placeholder={t("REGISTER.PASSWORD_PLACEHOLDER")}
           name="password"
           type="password"
-          disabled={isPending}
+          disabled={isLoading}
           inputProps={register("password")}
           error={errors.password?.message}
         />
@@ -122,7 +147,7 @@ export default function Register() {
           </div>
         )}
 
-        <Button type="submit" disabled={!isValid || isPending}>
+        <Button type="submit" disabled={!isValid || isLoading}>
           {t("REGISTER.SIGN_UP")}
           <Image
             className="h-3 w-3"
@@ -141,7 +166,7 @@ export default function Register() {
           <Divider />
         </div>
 
-        <Button variant="secondary" onClick={singUpOAuth} disabled={isPending}>
+        <Button variant="secondary" onClick={singUpOAuth} disabled={isLoading}>
           <Image
             className="h-5 w-5"
             src="/google.svg"
