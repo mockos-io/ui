@@ -16,7 +16,7 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { Error } from "./error";
+import type { Error } from './error';
 
 /**
  * The resource conflicts with existing data.

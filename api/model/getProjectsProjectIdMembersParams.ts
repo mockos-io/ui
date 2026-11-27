@@ -16,9 +16,9 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { PageParameter } from "./pageParameter";
-import type { PageSizeParameter } from "./pageSizeParameter";
-import type { SearchParameter } from "./searchParameter";
+import type { PageParameter } from './pageParameter';
+import type { PageSizeParameter } from './pageSizeParameter';
+import type { SearchParameter } from './searchParameter';
 
 export type GetProjectsProjectIdMembersParams = {
   /**

@@ -5,23 +5,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useGetAuthGlogin, usePostAuthLogin } from "@/api/auth";
+import type { LoginRequest } from "@/api/model";
 import Button from "@/components/Button";
 import Divider from "@/components/Divider";
 import TextInput from "@/components/TextInput";
-
-type LoginFormValues = {
-  email: string;
-  password: string;
-};
+import { ToastType, useToast } from "@/components/Toast";
+import { AUTH_TOKEN_COOKIE_KEY, setCookie } from "@/lib/cookies";
 
 export default function Login() {
   const t = useTranslations();
   const router = useRouter();
+  const { showToast } = useToast();
 
   const loginSchema = z.object({
-    email: z.string().trim().min(1, t("COMMON.REQUIRED")),
+    email: z
+      .email(t("LOGIN.EMAIL_INVALID"))
+      .trim()
+      .min(1, t("COMMON.REQUIRED")),
     password: z.string().trim().min(1, t("COMMON.REQUIRED")),
   });
 
@@ -29,17 +33,64 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors, isValid },
-  } = useForm<LoginFormValues>({
+  } = useForm<LoginRequest>({
     resolver: zodResolver(loginSchema),
-    mode: "onBlur",
+    mode: "onTouched",
   });
 
-  function login(_values: LoginFormValues) {
-    // TODO: add logic
+  const { mutate, isPending } = usePostAuthLogin({
+    mutation: {
+      onSuccess: (response) => {
+        if (response.status !== 200) {
+          onError();
+
+          return;
+        }
+
+        setCookie(AUTH_TOKEN_COOKIE_KEY, response.data.token);
+        router.replace("/dashboard");
+      },
+      onError: (error) => onError(error.message),
+    },
+  });
+
+  const { refetch: startGoogleLogin, isFetching: isPendingGLogin } =
+    useGetAuthGlogin({
+      query: {
+        enabled: false,
+      },
+    });
+
+  const isLoading = useMemo(
+    () => isPending || isPendingGLogin,
+    [isPending, isPendingGLogin],
+  );
+
+  const onError = useCallback(
+    (message: string = t("COMMON.ERROR")) => {
+      showToast(message, 5000, "/error.svg", ToastType.ERROR);
+    },
+    [t, showToast],
+  );
+
+  function login(values: LoginRequest) {
+    mutate({ data: values });
   }
 
-  function loginOAuth() {
-    //TODO: add logic
+  async function loginOAuth() {
+    const authTab = window.open("about:blank", "_blank");
+
+    try {
+      const { data: response } = await startGoogleLogin();
+
+      if (response && authTab) {
+        authTab.location.href = response.data.url;
+      } else {
+        authTab?.close();
+      }
+    } catch {
+      authTab?.close();
+    }
   }
 
   return (
@@ -65,6 +116,7 @@ export default function Login() {
           type="email"
           inputProps={register("email")}
           error={errors.email?.message}
+          disabled={isLoading}
           link={t("LOGIN.FORGOT_PASSWORD")}
           onLinkClick={() => router.push("/auth/recover")}
         />
@@ -74,11 +126,12 @@ export default function Login() {
           placeholder={t("LOGIN.PASSWORD_PLACEHOLDER")}
           name="password"
           type="password"
+          disabled={isLoading}
           inputProps={register("password")}
           error={errors.password?.message}
         />
 
-        <Button type="submit" disabled={!isValid}>
+        <Button type="submit" disabled={!isValid || isLoading}>
           {t("LOGIN.SIGN_IN")}
           <Image
             className="h-3 w-3"
@@ -98,7 +151,7 @@ export default function Login() {
         <Divider />
       </div>
 
-      <Button variant="secondary" onClick={loginOAuth}>
+      <Button variant="secondary" onClick={loginOAuth} disabled={isLoading}>
         <Image
           className="h-5 w-5"
           src="/google.svg"

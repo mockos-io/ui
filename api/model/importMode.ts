@@ -17,10 +17,11 @@
  * OpenAPI spec version: 3.0.0
  */
 
-export type ImportMode = (typeof ImportMode)[keyof typeof ImportMode];
+export type ImportMode = typeof ImportMode[keyof typeof ImportMode];
+
 
 export const ImportMode = {
-  OVERRIDE: "OVERRIDE",
-  MISSING: "MISSING",
-  MERGE: "MERGE",
+  OVERRIDE: 'OVERRIDE',
+  MISSING: 'MISSING',
+  MERGE: 'MERGE',
 } as const;

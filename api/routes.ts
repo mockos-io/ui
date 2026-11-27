@@ -16,7 +16,10 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -29,9 +32,8 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   BadRequestResponse,
@@ -43,56 +45,43 @@ import type {
   NotFoundResponse,
   Route,
   SortRouteRequest,
-  UnauthorizedResponse,
-} from "./model";
+  UnauthorizedResponse
+} from './model';
 
-const getHeaders = (
-  ...sources: (
-    | RequestInit["headers"]
-    | Record<
-        string,
-        string | number | boolean | bigint | readonly string[] | undefined
-      >
-  )[]
-) => {
+import { fetcher } from '../lib/api-fetcher';
+
+
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | number | boolean | bigint | readonly string[] | undefined>)[]) => {
   const seen = new Set<string>();
   const layers: [string, string | readonly string[]][][] = [];
   for (const source of sources.reverse()) {
     if (!source) continue;
-    const entries =
-      source instanceof Headers
-        ? source.entries()
-        : Symbol.iterator in source
-          ? Array.from(
-              source as Iterable<Iterable<string>>,
-              (entry) => Array.from(entry) as [string, string],
-            )
-          : Object.entries<
-              string | number | boolean | bigint | readonly string[] | undefined
-            >(source);
+    const entries = source instanceof Headers
+      ? source.entries()
+      : Symbol.iterator in source
+        ? Array.from(source as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string])
+        : Object.entries<string | number | boolean | bigint | readonly string[] | undefined>(source);
     const layer: [string, string | readonly string[]][] = [];
     for (const [name, value] of entries) {
-      if (value !== undefined && !seen.has(name.toLowerCase()))
-        layer.push([name, typeof value === "object" ? value : String(value)]);
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, typeof value === 'object' ? value : String(value)]);
     }
     for (const [name] of layer) seen.add(name.toLowerCase());
     layers.push(layer);
   }
-  return Object.fromEntries(layers.reverse().flat()) as Extract<
-    RequestInit["headers"],
-    Record<string, unknown>
-  >;
+  return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
 };
 
-const withQueryKey = <T extends object, K>(
-  query: T,
-  queryKey: K,
-): T & { queryKey: K } => {
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -103,285 +92,188 @@ const withQueryKey = <T extends object, K>(
 };
 
 export type getProjectsProjectIdRoutesResponse200 = {
-  data: Route[];
-  status: 200;
-};
+  data: Route[]
+  status: 200
+}
 
 export type getProjectsProjectIdRoutesResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type getProjectsProjectIdRoutesResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type getProjectsProjectIdRoutesResponseSuccess =
-  getProjectsProjectIdRoutesResponse200 & {
-    headers: Headers;
-  };
-export type getProjectsProjectIdRoutesResponseError = (
-  | getProjectsProjectIdRoutesResponse401
-  | getProjectsProjectIdRoutesResponse404
-) & {
+export type getProjectsProjectIdRoutesResponseSuccess = (getProjectsProjectIdRoutesResponse200) & {
+  headers: Headers;
+};
+export type getProjectsProjectIdRoutesResponseError = (getProjectsProjectIdRoutesResponse401 | getProjectsProjectIdRoutesResponse404) & {
   headers: Headers;
 };
 
-export type getProjectsProjectIdRoutesResponse =
-  | getProjectsProjectIdRoutesResponseSuccess
-  | getProjectsProjectIdRoutesResponseError;
+export type getProjectsProjectIdRoutesResponse = (getProjectsProjectIdRoutesResponseSuccess | getProjectsProjectIdRoutesResponseError)
 
-export const getGetProjectsProjectIdRoutesUrl = (projectId: number) => {
-  return `/projects/${projectId}/routes`;
-};
+export const getGetProjectsProjectIdRoutesUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/routes`
+}
 
 /**
  * Returns the project's top-level routes and folders, in display order. Each folder includes its children.
  * @summary List routes
  */
-export const getProjectsProjectIdRoutes = async (
-  projectId: number,
-  options?: RequestInit,
-): Promise<getProjectsProjectIdRoutesResponse> => {
-  const res = await fetch(getGetProjectsProjectIdRoutesUrl(projectId), {
+export const getProjectsProjectIdRoutes = async (projectId: number, options?: Parameters<typeof fetcher>[1]): Promise<getProjectsProjectIdRoutesResponse> => {
+
+  return fetcher<getProjectsProjectIdRoutesResponse>(getGetProjectsProjectIdRoutesUrl(projectId),
+  {
     ...options,
-    method: "GET",
-  });
+    method: 'GET'
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getProjectsProjectIdRoutesResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as getProjectsProjectIdRoutesResponse;
-};
+  }
+);}
 
-export const getGetProjectsProjectIdRoutesQueryKey = (projectId: number) => {
-  return [`/projects/${projectId}/routes`] as const;
-};
 
-export const getGetProjectsProjectIdRoutesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
+
+
+
+export const getGetProjectsProjectIdRoutesQueryKey = (projectId: number,) => {
+    return [
+    `/projects/${projectId}/routes`
+    ] as const;
+    }
+
+
+export const getGetProjectsProjectIdRoutesQueryOptions = <TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError = UnauthorizedResponse | NotFoundResponse>(projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getGetProjectsProjectIdRoutesQueryKey(projectId);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>
-  > = ({ signal }) =>
-    getProjectsProjectIdRoutes(projectId, { signal, ...fetchOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetProjectsProjectIdRoutesQueryKey(projectId);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: projectId !== null && projectId !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type GetProjectsProjectIdRoutesQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>
->;
-export type GetProjectsProjectIdRoutesQueryError =
-  | UnauthorizedResponse
-  | NotFoundResponse;
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>> = ({ signal }) => getProjectsProjectIdRoutes(projectId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProjectsProjectIdRoutesQueryResult = NonNullable<Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>>
+export type GetProjectsProjectIdRoutesQueryError = UnauthorizedResponse | NotFoundResponse
+
 
 /**
  * Returns the project's top-level routes and folders, in display order. Each folder includes its children.
  * @summary List routes
  */
-export function useGetProjectsProjectIdRoutes<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export function useGetProjectsProjectIdRoutes<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError = UnauthorizedResponse | NotFoundResponse>(
+ projectId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
           TError,
           Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the project's top-level routes and folders, in display order. Each folder includes its children.
  * @summary List routes
  */
-export function useGetProjectsProjectIdRoutes<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export function useGetProjectsProjectIdRoutes<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError = UnauthorizedResponse | NotFoundResponse>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
           TError,
           Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the project's top-level routes and folders, in display order. Each folder includes its children.
  * @summary List routes
  */
-export function useGetProjectsProjectIdRoutes<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetProjectsProjectIdRoutes<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError = UnauthorizedResponse | NotFoundResponse>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Returns the project's top-level routes and folders, in display order. Each folder includes its children.
  * @summary List routes
  */
-export function useGetProjectsProjectIdRoutes<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetProjectsProjectIdRoutesQueryOptions(
-    projectId,
-    options,
-  );
+export function useGetProjectsProjectIdRoutes<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError = UnauthorizedResponse | NotFoundResponse>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutes>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetProjectsProjectIdRoutesQueryOptions(projectId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
 
 export type postProjectsProjectIdRoutesResponse200 = {
-  data: Route;
-  status: 200;
-};
+  data: Route
+  status: 200
+}
 
 export type postProjectsProjectIdRoutesResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type postProjectsProjectIdRoutesResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type postProjectsProjectIdRoutesResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
+  data: ForbiddenResponse
+  status: 403
+}
 
 export type postProjectsProjectIdRoutesResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
 export type postProjectsProjectIdRoutesResponse409 = {
-  data: ConflictResponse;
-  status: 409;
-};
+  data: ConflictResponse
+  status: 409
+}
 
-export type postProjectsProjectIdRoutesResponseSuccess =
-  postProjectsProjectIdRoutesResponse200 & {
-    headers: Headers;
-  };
-export type postProjectsProjectIdRoutesResponseError = (
-  | postProjectsProjectIdRoutesResponse400
-  | postProjectsProjectIdRoutesResponse401
-  | postProjectsProjectIdRoutesResponse403
-  | postProjectsProjectIdRoutesResponse404
-  | postProjectsProjectIdRoutesResponse409
-) & {
+export type postProjectsProjectIdRoutesResponseSuccess = (postProjectsProjectIdRoutesResponse200) & {
+  headers: Headers;
+};
+export type postProjectsProjectIdRoutesResponseError = (postProjectsProjectIdRoutesResponse400 | postProjectsProjectIdRoutesResponse401 | postProjectsProjectIdRoutesResponse403 | postProjectsProjectIdRoutesResponse404 | postProjectsProjectIdRoutesResponse409) & {
   headers: Headers;
 };
 
-export type postProjectsProjectIdRoutesResponse =
-  | postProjectsProjectIdRoutesResponseSuccess
-  | postProjectsProjectIdRoutesResponseError;
+export type postProjectsProjectIdRoutesResponse = (postProjectsProjectIdRoutesResponseSuccess | postProjectsProjectIdRoutesResponseError)
 
-export const getPostProjectsProjectIdRoutesUrl = (projectId: number) => {
-  return `/projects/${projectId}/routes`;
-};
+export const getPostProjectsProjectIdRoutesUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/routes`
+}
 
 /**
  * Creates a mock endpoint or a folder. Only editors and administrators can
@@ -391,95 +283,57 @@ export const getPostProjectsProjectIdRoutesUrl = (projectId: number) => {
  * a name to create a folder. A folder cannot contain another folder.
  * @summary Create a route or folder
  */
-export const postProjectsProjectIdRoutes = async (
-  projectId: number,
-  createRouteRequest: CreateRouteRequest,
-  options?: RequestInit,
-): Promise<postProjectsProjectIdRoutesResponse> => {
-  const res = await fetch(getPostProjectsProjectIdRoutesUrl(projectId), {
+export const postProjectsProjectIdRoutes = async (projectId: number,
+    createRouteRequest: CreateRouteRequest, options?: Parameters<typeof fetcher>[1]): Promise<postProjectsProjectIdRoutesResponse> => {
+
+  return fetcher<postProjectsProjectIdRoutesResponse>(getPostProjectsProjectIdRoutesUrl(projectId),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(createRouteRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(createRouteRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postProjectsProjectIdRoutesResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postProjectsProjectIdRoutesResponse;
-};
 
-export const getPostProjectsProjectIdRoutesMutationKey = () =>
-  ["postProjectsProjectIdRoutes"] as const;
 
-export const getPostProjectsProjectIdRoutesMutationOptions = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse
-    | ConflictResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>,
-    TError,
-    PostProjectsProjectIdRoutesMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>,
-  TError,
-  PostProjectsProjectIdRoutesMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostProjectsProjectIdRoutesMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>,
-    PostProjectsProjectIdRoutesMutationVariables
-  > = (props) => {
-    const { projectId, data } = props ?? {};
+export const getPostProjectsProjectIdRoutesMutationKey = () => ['postProjectsProjectIdRoutes'] as const;
 
-    return postProjectsProjectIdRoutes(projectId, data, fetchOptions);
-  };
+export const getPostProjectsProjectIdRoutesMutationOptions = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse | ConflictResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>, TError,PostProjectsProjectIdRoutesMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>, TError,PostProjectsProjectIdRoutesMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostProjectsProjectIdRoutesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostProjectsProjectIdRoutesMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>
->;
-export type PostProjectsProjectIdRoutesMutationBody = CreateRouteRequest;
-export type PostProjectsProjectIdRoutesMutationError =
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse
-  | ConflictResponse;
-export type PostProjectsProjectIdRoutesMutationVariables = {
-  projectId: number;
-  data: CreateRouteRequest;
-};
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>, PostProjectsProjectIdRoutesMutationVariables> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  postProjectsProjectIdRoutes(projectId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostProjectsProjectIdRoutesMutationResult = NonNullable<Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>>
+    export type PostProjectsProjectIdRoutesMutationBody = CreateRouteRequest
+    export type PostProjectsProjectIdRoutesMutationError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse | ConflictResponse
+    export type PostProjectsProjectIdRoutesMutationVariables = {projectId: number;data: CreateRouteRequest}
+
+    /**
  * Creates a mock endpoint or a folder. Only editors and administrators can
  * do this.
  *
@@ -487,69 +341,47 @@ export type PostProjectsProjectIdRoutesMutationVariables = {
  * a name to create a folder. A folder cannot contain another folder.
  * @summary Create a route or folder
  */
-export const usePostProjectsProjectIdRoutes = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse
-    | ConflictResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>,
-      TError,
-      PostProjectsProjectIdRoutesMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>,
-  TError,
-  PostProjectsProjectIdRoutesMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPostProjectsProjectIdRoutesMutationOptions(options),
-    queryClient,
-  );
-};
-export type getProjectsProjectIdRoutesRealtimeResponse200 = {
-  data: string;
-  status: 200;
-};
+export const usePostProjectsProjectIdRoutes = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse | ConflictResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>, TError,PostProjectsProjectIdRoutesMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postProjectsProjectIdRoutes>>,
+        TError,
+        PostProjectsProjectIdRoutesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostProjectsProjectIdRoutesMutationOptions(options), queryClient);
+    }
+    export type getProjectsProjectIdRoutesRealtimeResponse200 = {
+  data: string
+  status: 200
+}
 
 export type getProjectsProjectIdRoutesRealtimeResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type getProjectsProjectIdRoutesRealtimeResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type getProjectsProjectIdRoutesRealtimeResponseSuccess =
-  getProjectsProjectIdRoutesRealtimeResponse200 & {
-    headers: Headers;
-  };
-export type getProjectsProjectIdRoutesRealtimeResponseError = (
-  | getProjectsProjectIdRoutesRealtimeResponse401
-  | getProjectsProjectIdRoutesRealtimeResponse404
-) & {
+export type getProjectsProjectIdRoutesRealtimeResponseSuccess = (getProjectsProjectIdRoutesRealtimeResponse200) & {
+  headers: Headers;
+};
+export type getProjectsProjectIdRoutesRealtimeResponseError = (getProjectsProjectIdRoutesRealtimeResponse401 | getProjectsProjectIdRoutesRealtimeResponse404) & {
   headers: Headers;
 };
 
-export type getProjectsProjectIdRoutesRealtimeResponse =
-  | getProjectsProjectIdRoutesRealtimeResponseSuccess
-  | getProjectsProjectIdRoutesRealtimeResponseError;
+export type getProjectsProjectIdRoutesRealtimeResponse = (getProjectsProjectIdRoutesRealtimeResponseSuccess | getProjectsProjectIdRoutesRealtimeResponseError)
 
-export const getGetProjectsProjectIdRoutesRealtimeUrl = (projectId: number) => {
-  return `/projects/${projectId}/routes/realtime`;
-};
+export const getGetProjectsProjectIdRoutesRealtimeUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/routes/realtime`
+}
 
 /**
  * Opens a server-sent events stream. The first event contains the current
@@ -557,83 +389,49 @@ export const getGetProjectsProjectIdRoutesRealtimeUrl = (projectId: number) => {
  * updated list whenever the project's routes change.
  * @summary Watch routes in real time
  */
-export const getProjectsProjectIdRoutesRealtime = async (
-  projectId: number,
-  options?: RequestInit,
-): Promise<getProjectsProjectIdRoutesRealtimeResponse> => {
-  const res = await fetch(getGetProjectsProjectIdRoutesRealtimeUrl(projectId), {
+export const getProjectsProjectIdRoutesRealtime = async (projectId: number, options?: Parameters<typeof fetcher>[1]): Promise<getProjectsProjectIdRoutesRealtimeResponse> => {
+
+  return fetcher<getProjectsProjectIdRoutesRealtimeResponse>(getGetProjectsProjectIdRoutesRealtimeUrl(projectId),
+  {
     ...options,
-    method: "GET",
-  });
+    method: 'GET'
 
-  const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getProjectsProjectIdRoutesRealtimeResponse["data"] = body
-    ? contentType.includes("json")
-      ? JSON.parse(body)
-      : body
-    : body !== null && contentType && !contentType.includes("json")
-      ? body
-      : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as getProjectsProjectIdRoutesRealtimeResponse;
-};
+  }
+);}
 
-export const getGetProjectsProjectIdRoutesRealtimeQueryKey = (
-  projectId: number,
+
+
+
+
+export const getGetProjectsProjectIdRoutesRealtimeQueryKey = (projectId: number,) => {
+    return [
+    `/projects/${projectId}/routes/realtime`
+    ] as const;
+    }
+
+
+export const getGetProjectsProjectIdRoutesRealtimeQueryOptions = <TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError = UnauthorizedResponse | NotFoundResponse>(projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
 ) => {
-  return [`/projects/${projectId}/routes/realtime`] as const;
-};
 
-export const getGetProjectsProjectIdRoutesRealtimeQueryOptions = <
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ??
-    getGetProjectsProjectIdRoutesRealtimeQueryKey(projectId);
+  const queryKey =  queryOptions?.queryKey ?? getGetProjectsProjectIdRoutesRealtimeQueryKey(projectId);
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>
-  > = ({ signal }) =>
-    getProjectsProjectIdRoutesRealtime(projectId, { signal, ...fetchOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: projectId !== null && projectId !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type GetProjectsProjectIdRoutesRealtimeQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>
->;
-export type GetProjectsProjectIdRoutesRealtimeQueryError =
-  | UnauthorizedResponse
-  | NotFoundResponse;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>> = ({ signal }) => getProjectsProjectIdRoutesRealtime(projectId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: projectId !== null && projectId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProjectsProjectIdRoutesRealtimeQueryResult = NonNullable<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>>
+export type GetProjectsProjectIdRoutesRealtimeQueryError = UnauthorizedResponse | NotFoundResponse
+
 
 /**
  * Opens a server-sent events stream. The first event contains the current
@@ -641,624 +439,325 @@ export type GetProjectsProjectIdRoutesRealtimeQueryError =
  * updated list whenever the project's routes change.
  * @summary Watch routes in real time
  */
-export function useGetProjectsProjectIdRoutesRealtime<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export function useGetProjectsProjectIdRoutesRealtime<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError = UnauthorizedResponse | NotFoundResponse>(
+ projectId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
           TError,
           Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Opens a server-sent events stream. The first event contains the current
  * top-level routes and folders; every following event contains the full
  * updated list whenever the project's routes change.
  * @summary Watch routes in real time
  */
-export function useGetProjectsProjectIdRoutesRealtime<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+export function useGetProjectsProjectIdRoutesRealtime<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError = UnauthorizedResponse | NotFoundResponse>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
           TError,
           Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>
-        >,
-        "initialData"
-      >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Opens a server-sent events stream. The first event contains the current
  * top-level routes and folders; every following event contains the full
  * updated list whenever the project's routes change.
  * @summary Watch routes in real time
  */
-export function useGetProjectsProjectIdRoutesRealtime<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetProjectsProjectIdRoutesRealtime<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError = UnauthorizedResponse | NotFoundResponse>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * Opens a server-sent events stream. The first event contains the current
  * top-level routes and folders; every following event contains the full
  * updated list whenever the project's routes change.
  * @summary Watch routes in real time
  */
-export function useGetProjectsProjectIdRoutesRealtime<
-  TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-  TError = UnauthorizedResponse | NotFoundResponse,
->(
-  projectId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>,
-        TError,
-        TData
-      >
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetProjectsProjectIdRoutesRealtimeQueryOptions(
-    projectId,
-    options,
-  );
+export function useGetProjectsProjectIdRoutesRealtime<TData = Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError = UnauthorizedResponse | NotFoundResponse>(
+ projectId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProjectsProjectIdRoutesRealtime>>, TError, TData>>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetProjectsProjectIdRoutesRealtimeQueryOptions(projectId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+
+
+
+
+
 export type putProjectsProjectIdRoutesRouteIdResponse200 = {
-  data: Route;
-  status: 200;
-};
+  data: Route
+  status: 200
+}
 
 export type putProjectsProjectIdRoutesRouteIdResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type putProjectsProjectIdRoutesRouteIdResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type putProjectsProjectIdRoutesRouteIdResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
+  data: ForbiddenResponse
+  status: 403
+}
 
 export type putProjectsProjectIdRoutesRouteIdResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type putProjectsProjectIdRoutesRouteIdResponseSuccess =
-  putProjectsProjectIdRoutesRouteIdResponse200 & {
-    headers: Headers;
-  };
-export type putProjectsProjectIdRoutesRouteIdResponseError = (
-  | putProjectsProjectIdRoutesRouteIdResponse400
-  | putProjectsProjectIdRoutesRouteIdResponse401
-  | putProjectsProjectIdRoutesRouteIdResponse403
-  | putProjectsProjectIdRoutesRouteIdResponse404
-) & {
+export type putProjectsProjectIdRoutesRouteIdResponseSuccess = (putProjectsProjectIdRoutesRouteIdResponse200) & {
+  headers: Headers;
+};
+export type putProjectsProjectIdRoutesRouteIdResponseError = (putProjectsProjectIdRoutesRouteIdResponse400 | putProjectsProjectIdRoutesRouteIdResponse401 | putProjectsProjectIdRoutesRouteIdResponse403 | putProjectsProjectIdRoutesRouteIdResponse404) & {
   headers: Headers;
 };
 
-export type putProjectsProjectIdRoutesRouteIdResponse =
-  | putProjectsProjectIdRoutesRouteIdResponseSuccess
-  | putProjectsProjectIdRoutesRouteIdResponseError;
+export type putProjectsProjectIdRoutesRouteIdResponse = (putProjectsProjectIdRoutesRouteIdResponseSuccess | putProjectsProjectIdRoutesRouteIdResponseError)
 
-export const getPutProjectsProjectIdRoutesRouteIdUrl = (
-  projectId: number,
-  routeId: number,
-) => {
-  return `/projects/${projectId}/routes/${routeId}`;
-};
+export const getPutProjectsProjectIdRoutesRouteIdUrl = (projectId: number,
+    routeId: number,) => {
 
-/**
- * Updates a mock endpoint or renames a folder. Only editors and administrators can do this.
- * @summary Update a route or folder
- */
-export const putProjectsProjectIdRoutesRouteId = async (
-  projectId: number,
-  routeId: number,
-  editRouteRequest: EditRouteRequest,
-  options?: RequestInit,
-): Promise<putProjectsProjectIdRoutesRouteIdResponse> => {
-  const res = await fetch(
-    getPutProjectsProjectIdRoutesRouteIdUrl(projectId, routeId),
-    {
-      ...options,
-      method: "PUT",
-      headers: getHeaders(
-        { "Content-Type": "application/json" },
-        options?.headers,
-      ),
-      body: JSON.stringify(editRouteRequest),
-    },
-  );
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: putProjectsProjectIdRoutesRouteIdResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as putProjectsProjectIdRoutesRouteIdResponse;
-};
 
-export const getPutProjectsProjectIdRoutesRouteIdMutationKey = () =>
-  ["putProjectsProjectIdRoutesRouteId"] as const;
-
-export const getPutProjectsProjectIdRoutesRouteIdMutationOptions = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>,
-    TError,
-    PutProjectsProjectIdRoutesRouteIdMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>,
-  TError,
-  PutProjectsProjectIdRoutesRouteIdMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPutProjectsProjectIdRoutesRouteIdMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>,
-    PutProjectsProjectIdRoutesRouteIdMutationVariables
-  > = (props) => {
-    const { projectId, routeId, data } = props ?? {};
-
-    return putProjectsProjectIdRoutesRouteId(
-      projectId,
-      routeId,
-      data,
-      fetchOptions,
-    );
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type PutProjectsProjectIdRoutesRouteIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>
->;
-export type PutProjectsProjectIdRoutesRouteIdMutationBody = EditRouteRequest;
-export type PutProjectsProjectIdRoutesRouteIdMutationError =
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse;
-export type PutProjectsProjectIdRoutesRouteIdMutationVariables = {
-  projectId: number;
-  routeId: number;
-  data: EditRouteRequest;
-};
+  return `/projects/${projectId}/routes/${routeId}`
+}
 
 /**
  * Updates a mock endpoint or renames a folder. Only editors and administrators can do this.
  * @summary Update a route or folder
  */
-export const usePutProjectsProjectIdRoutesRouteId = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>,
-      TError,
-      PutProjectsProjectIdRoutesRouteIdMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>,
-  TError,
-  PutProjectsProjectIdRoutesRouteIdMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPutProjectsProjectIdRoutesRouteIdMutationOptions(options),
-    queryClient,
-  );
-};
-export type deleteProjectsProjectIdRoutesRouteIdResponse200 = {
-  data: Message;
-  status: 200;
-};
+export const putProjectsProjectIdRoutesRouteId = async (projectId: number,
+    routeId: number,
+    editRouteRequest: EditRouteRequest, options?: Parameters<typeof fetcher>[1]): Promise<putProjectsProjectIdRoutesRouteIdResponse> => {
+
+  return fetcher<putProjectsProjectIdRoutesRouteIdResponse>(getPutProjectsProjectIdRoutesRouteIdUrl(projectId,routeId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(editRouteRequest)
+  }
+);}
+
+
+
+
+
+export const getPutProjectsProjectIdRoutesRouteIdMutationKey = () => ['putProjectsProjectIdRoutesRouteId'] as const;
+
+export const getPutProjectsProjectIdRoutesRouteIdMutationOptions = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>, TError,PutProjectsProjectIdRoutesRouteIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>, TError,PutProjectsProjectIdRoutesRouteIdMutationVariables, TContext> => {
+
+const mutationKey = getPutProjectsProjectIdRoutesRouteIdMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>, PutProjectsProjectIdRoutesRouteIdMutationVariables> = (props) => {
+          const {projectId,routeId,data} = props ?? {};
+
+          return  putProjectsProjectIdRoutesRouteId(projectId,routeId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutProjectsProjectIdRoutesRouteIdMutationResult = NonNullable<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>>
+    export type PutProjectsProjectIdRoutesRouteIdMutationBody = EditRouteRequest
+    export type PutProjectsProjectIdRoutesRouteIdMutationError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+    export type PutProjectsProjectIdRoutesRouteIdMutationVariables = {projectId: number;routeId: number;data: EditRouteRequest}
+
+    /**
+ * Updates a mock endpoint or renames a folder. Only editors and administrators can do this.
+ * @summary Update a route or folder
+ */
+export const usePutProjectsProjectIdRoutesRouteId = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>, TError,PutProjectsProjectIdRoutesRouteIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putProjectsProjectIdRoutesRouteId>>,
+        TError,
+        PutProjectsProjectIdRoutesRouteIdMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPutProjectsProjectIdRoutesRouteIdMutationOptions(options), queryClient);
+    }
+    export type deleteProjectsProjectIdRoutesRouteIdResponse200 = {
+  data: Message
+  status: 200
+}
 
 export type deleteProjectsProjectIdRoutesRouteIdResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type deleteProjectsProjectIdRoutesRouteIdResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
+  data: ForbiddenResponse
+  status: 403
+}
 
 export type deleteProjectsProjectIdRoutesRouteIdResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type deleteProjectsProjectIdRoutesRouteIdResponseSuccess =
-  deleteProjectsProjectIdRoutesRouteIdResponse200 & {
-    headers: Headers;
-  };
-export type deleteProjectsProjectIdRoutesRouteIdResponseError = (
-  | deleteProjectsProjectIdRoutesRouteIdResponse401
-  | deleteProjectsProjectIdRoutesRouteIdResponse403
-  | deleteProjectsProjectIdRoutesRouteIdResponse404
-) & {
+export type deleteProjectsProjectIdRoutesRouteIdResponseSuccess = (deleteProjectsProjectIdRoutesRouteIdResponse200) & {
+  headers: Headers;
+};
+export type deleteProjectsProjectIdRoutesRouteIdResponseError = (deleteProjectsProjectIdRoutesRouteIdResponse401 | deleteProjectsProjectIdRoutesRouteIdResponse403 | deleteProjectsProjectIdRoutesRouteIdResponse404) & {
   headers: Headers;
 };
 
-export type deleteProjectsProjectIdRoutesRouteIdResponse =
-  | deleteProjectsProjectIdRoutesRouteIdResponseSuccess
-  | deleteProjectsProjectIdRoutesRouteIdResponseError;
+export type deleteProjectsProjectIdRoutesRouteIdResponse = (deleteProjectsProjectIdRoutesRouteIdResponseSuccess | deleteProjectsProjectIdRoutesRouteIdResponseError)
 
-export const getDeleteProjectsProjectIdRoutesRouteIdUrl = (
-  projectId: number,
-  routeId: number,
-) => {
-  return `/projects/${projectId}/routes/${routeId}`;
-};
+export const getDeleteProjectsProjectIdRoutesRouteIdUrl = (projectId: number,
+    routeId: number,) => {
 
-/**
- * Deletes a route or folder and everything inside it. Only editors and administrators can do this.
- * @summary Delete a route or folder
- */
-export const deleteProjectsProjectIdRoutesRouteId = async (
-  projectId: number,
-  routeId: number,
-  options?: RequestInit,
-): Promise<deleteProjectsProjectIdRoutesRouteIdResponse> => {
-  const res = await fetch(
-    getDeleteProjectsProjectIdRoutesRouteIdUrl(projectId, routeId),
-    {
-      ...options,
-      method: "DELETE",
-    },
-  );
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: deleteProjectsProjectIdRoutesRouteIdResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as deleteProjectsProjectIdRoutesRouteIdResponse;
-};
 
-export const getDeleteProjectsProjectIdRoutesRouteIdMutationKey = () =>
-  ["deleteProjectsProjectIdRoutesRouteId"] as const;
-
-export const getDeleteProjectsProjectIdRoutesRouteIdMutationOptions = <
-  TError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>,
-    TError,
-    DeleteProjectsProjectIdRoutesRouteIdMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>,
-  TError,
-  DeleteProjectsProjectIdRoutesRouteIdMutationVariables,
-  TContext
-> => {
-  const mutationKey = getDeleteProjectsProjectIdRoutesRouteIdMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>,
-    DeleteProjectsProjectIdRoutesRouteIdMutationVariables
-  > = (props) => {
-    const { projectId, routeId } = props ?? {};
-
-    return deleteProjectsProjectIdRoutesRouteId(
-      projectId,
-      routeId,
-      fetchOptions,
-    );
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteProjectsProjectIdRoutesRouteIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>
->;
-
-export type DeleteProjectsProjectIdRoutesRouteIdMutationError =
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse;
-export type DeleteProjectsProjectIdRoutesRouteIdMutationVariables = {
-  projectId: number;
-  routeId: number;
-};
+  return `/projects/${projectId}/routes/${routeId}`
+}
 
 /**
  * Deletes a route or folder and everything inside it. Only editors and administrators can do this.
  * @summary Delete a route or folder
  */
-export const useDeleteProjectsProjectIdRoutesRouteId = <
-  TError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>,
-      TError,
-      DeleteProjectsProjectIdRoutesRouteIdMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>,
-  TError,
-  DeleteProjectsProjectIdRoutesRouteIdMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getDeleteProjectsProjectIdRoutesRouteIdMutationOptions(options),
-    queryClient,
-  );
-};
-export type postProjectsProjectIdRoutesRouteIdSortResponse200 = {
-  data: Message;
-  status: 200;
-};
+export const deleteProjectsProjectIdRoutesRouteId = async (projectId: number,
+    routeId: number, options?: Parameters<typeof fetcher>[1]): Promise<deleteProjectsProjectIdRoutesRouteIdResponse> => {
+
+  return fetcher<deleteProjectsProjectIdRoutesRouteIdResponse>(getDeleteProjectsProjectIdRoutesRouteIdUrl(projectId,routeId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteProjectsProjectIdRoutesRouteIdMutationKey = () => ['deleteProjectsProjectIdRoutesRouteId'] as const;
+
+export const getDeleteProjectsProjectIdRoutesRouteIdMutationOptions = <TError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>, TError,DeleteProjectsProjectIdRoutesRouteIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>, TError,DeleteProjectsProjectIdRoutesRouteIdMutationVariables, TContext> => {
+
+const mutationKey = getDeleteProjectsProjectIdRoutesRouteIdMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>, DeleteProjectsProjectIdRoutesRouteIdMutationVariables> = (props) => {
+          const {projectId,routeId} = props ?? {};
+
+          return  deleteProjectsProjectIdRoutesRouteId(projectId,routeId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProjectsProjectIdRoutesRouteIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>>
+
+    export type DeleteProjectsProjectIdRoutesRouteIdMutationError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+    export type DeleteProjectsProjectIdRoutesRouteIdMutationVariables = {projectId: number;routeId: number}
+
+    /**
+ * Deletes a route or folder and everything inside it. Only editors and administrators can do this.
+ * @summary Delete a route or folder
+ */
+export const useDeleteProjectsProjectIdRoutesRouteId = <TError = UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>, TError,DeleteProjectsProjectIdRoutesRouteIdMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProjectsProjectIdRoutesRouteId>>,
+        TError,
+        DeleteProjectsProjectIdRoutesRouteIdMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteProjectsProjectIdRoutesRouteIdMutationOptions(options), queryClient);
+    }
+    export type postProjectsProjectIdRoutesRouteIdSortResponse200 = {
+  data: Message
+  status: 200
+}
 
 export type postProjectsProjectIdRoutesRouteIdSortResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type postProjectsProjectIdRoutesRouteIdSortResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type postProjectsProjectIdRoutesRouteIdSortResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
+  data: ForbiddenResponse
+  status: 403
+}
 
 export type postProjectsProjectIdRoutesRouteIdSortResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type postProjectsProjectIdRoutesRouteIdSortResponseSuccess =
-  postProjectsProjectIdRoutesRouteIdSortResponse200 & {
-    headers: Headers;
-  };
-export type postProjectsProjectIdRoutesRouteIdSortResponseError = (
-  | postProjectsProjectIdRoutesRouteIdSortResponse400
-  | postProjectsProjectIdRoutesRouteIdSortResponse401
-  | postProjectsProjectIdRoutesRouteIdSortResponse403
-  | postProjectsProjectIdRoutesRouteIdSortResponse404
-) & {
+export type postProjectsProjectIdRoutesRouteIdSortResponseSuccess = (postProjectsProjectIdRoutesRouteIdSortResponse200) & {
+  headers: Headers;
+};
+export type postProjectsProjectIdRoutesRouteIdSortResponseError = (postProjectsProjectIdRoutesRouteIdSortResponse400 | postProjectsProjectIdRoutesRouteIdSortResponse401 | postProjectsProjectIdRoutesRouteIdSortResponse403 | postProjectsProjectIdRoutesRouteIdSortResponse404) & {
   headers: Headers;
 };
 
-export type postProjectsProjectIdRoutesRouteIdSortResponse =
-  | postProjectsProjectIdRoutesRouteIdSortResponseSuccess
-  | postProjectsProjectIdRoutesRouteIdSortResponseError;
+export type postProjectsProjectIdRoutesRouteIdSortResponse = (postProjectsProjectIdRoutesRouteIdSortResponseSuccess | postProjectsProjectIdRoutesRouteIdSortResponseError)
 
-export const getPostProjectsProjectIdRoutesRouteIdSortUrl = (
-  projectId: number,
-  routeId: number,
-) => {
-  return `/projects/${projectId}/routes/${routeId}/sort`;
-};
+export const getPostProjectsProjectIdRoutesRouteIdSortUrl = (projectId: number,
+    routeId: number,) => {
 
-/**
- * Moves a route or folder to a new position. Only editors and administrators
- * can do this.
- *
- * Use `into` to move it inside a folder, `before` to place it directly
- * before another route or folder, or neither to place it at the end. A
- * folder cannot be moved into another folder.
- * @summary Move a route or folder
- */
-export const postProjectsProjectIdRoutesRouteIdSort = async (
-  projectId: number,
-  routeId: number,
-  sortRouteRequest: SortRouteRequest,
-  options?: RequestInit,
-): Promise<postProjectsProjectIdRoutesRouteIdSortResponse> => {
-  const res = await fetch(
-    getPostProjectsProjectIdRoutesRouteIdSortUrl(projectId, routeId),
-    {
-      ...options,
-      method: "POST",
-      headers: getHeaders(
-        { "Content-Type": "application/json" },
-        options?.headers,
-      ),
-      body: JSON.stringify(sortRouteRequest),
-    },
-  );
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postProjectsProjectIdRoutesRouteIdSortResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postProjectsProjectIdRoutesRouteIdSortResponse;
-};
 
-export const getPostProjectsProjectIdRoutesRouteIdSortMutationKey = () =>
-  ["postProjectsProjectIdRoutesRouteIdSort"] as const;
-
-export const getPostProjectsProjectIdRoutesRouteIdSortMutationOptions = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>,
-    TError,
-    PostProjectsProjectIdRoutesRouteIdSortMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>,
-  TError,
-  PostProjectsProjectIdRoutesRouteIdSortMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostProjectsProjectIdRoutesRouteIdSortMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>,
-    PostProjectsProjectIdRoutesRouteIdSortMutationVariables
-  > = (props) => {
-    const { projectId, routeId, data } = props ?? {};
-
-    return postProjectsProjectIdRoutesRouteIdSort(
-      projectId,
-      routeId,
-      data,
-      fetchOptions,
-    );
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type PostProjectsProjectIdRoutesRouteIdSortMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>
->;
-export type PostProjectsProjectIdRoutesRouteIdSortMutationBody =
-  SortRouteRequest;
-export type PostProjectsProjectIdRoutesRouteIdSortMutationError =
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse;
-export type PostProjectsProjectIdRoutesRouteIdSortMutationVariables = {
-  projectId: number;
-  routeId: number;
-  data: SortRouteRequest;
-};
+  return `/projects/${projectId}/routes/${routeId}/sort`
+}
 
 /**
  * Moves a route or folder to a new position. Only editors and administrators
@@ -1269,32 +768,73 @@ export type PostProjectsProjectIdRoutesRouteIdSortMutationVariables = {
  * folder cannot be moved into another folder.
  * @summary Move a route or folder
  */
-export const usePostProjectsProjectIdRoutesRouteIdSort = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>,
-      TError,
-      PostProjectsProjectIdRoutesRouteIdSortMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>,
-  TError,
-  PostProjectsProjectIdRoutesRouteIdSortMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPostProjectsProjectIdRoutesRouteIdSortMutationOptions(options),
-    queryClient,
-  );
-};
+export const postProjectsProjectIdRoutesRouteIdSort = async (projectId: number,
+    routeId: number,
+    sortRouteRequest: SortRouteRequest, options?: Parameters<typeof fetcher>[1]): Promise<postProjectsProjectIdRoutesRouteIdSortResponse> => {
+
+  return fetcher<postProjectsProjectIdRoutesRouteIdSortResponse>(getPostProjectsProjectIdRoutesRouteIdSortUrl(projectId,routeId),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(sortRouteRequest)
+  }
+);}
+
+
+
+
+
+export const getPostProjectsProjectIdRoutesRouteIdSortMutationKey = () => ['postProjectsProjectIdRoutesRouteIdSort'] as const;
+
+export const getPostProjectsProjectIdRoutesRouteIdSortMutationOptions = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>, TError,PostProjectsProjectIdRoutesRouteIdSortMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>, TError,PostProjectsProjectIdRoutesRouteIdSortMutationVariables, TContext> => {
+
+const mutationKey = getPostProjectsProjectIdRoutesRouteIdSortMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>, PostProjectsProjectIdRoutesRouteIdSortMutationVariables> = (props) => {
+          const {projectId,routeId,data} = props ?? {};
+
+          return  postProjectsProjectIdRoutesRouteIdSort(projectId,routeId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostProjectsProjectIdRoutesRouteIdSortMutationResult = NonNullable<Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>>
+    export type PostProjectsProjectIdRoutesRouteIdSortMutationBody = SortRouteRequest
+    export type PostProjectsProjectIdRoutesRouteIdSortMutationError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+    export type PostProjectsProjectIdRoutesRouteIdSortMutationVariables = {projectId: number;routeId: number;data: SortRouteRequest}
+
+    /**
+ * Moves a route or folder to a new position. Only editors and administrators
+ * can do this.
+ *
+ * Use `into` to move it inside a folder, `before` to place it directly
+ * before another route or folder, or neither to place it at the end. A
+ * folder cannot be moved into another folder.
+ * @summary Move a route or folder
+ */
+export const usePostProjectsProjectIdRoutesRouteIdSort = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>, TError,PostProjectsProjectIdRoutesRouteIdSortMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postProjectsProjectIdRoutesRouteIdSort>>,
+        TError,
+        PostProjectsProjectIdRoutesRouteIdSortMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostProjectsProjectIdRoutesRouteIdSortMutationOptions(options), queryClient);
+    }

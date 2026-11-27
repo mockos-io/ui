@@ -17,12 +17,13 @@
  * OpenAPI spec version: 3.0.0
  */
 
-export type RouteMethod = (typeof RouteMethod)[keyof typeof RouteMethod];
+export type RouteMethod = typeof RouteMethod[keyof typeof RouteMethod];
+
 
 export const RouteMethod = {
-  GET: "GET",
-  POST: "POST",
-  DELETE: "DELETE",
-  PATCH: "PATCH",
-  PUT: "PUT",
+  GET: 'GET',
+  POST: 'POST',
+  DELETE: 'DELETE',
+  PATCH: 'PATCH',
+  PUT: 'PUT',
 } as const;

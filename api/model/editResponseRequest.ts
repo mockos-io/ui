@@ -21,9 +21,9 @@ export interface EditResponseRequest {
   /** @maxLength 200 */
   name?: string;
   /**
-   * @minimum 100
-   * @maximum 599
-   */
+     * @minimum 100
+     * @maximum 599
+     */
   status?: number;
   enabled?: boolean;
   /** Response body text. */

@@ -13,6 +13,10 @@ export default defineConfig({
       clean: true,
       override: {
         useTypeOverInterfaces: false,
+        mutator: {
+          path: "./lib/api-fetcher.ts",
+          name: "fetcher",
+        },
       },
     },
   },

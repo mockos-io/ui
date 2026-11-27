@@ -16,7 +16,7 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { MemberRole } from "./memberRole";
+import type { MemberRole } from './memberRole';
 
 export interface EditMemberRequest {
   role: MemberRole;

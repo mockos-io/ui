@@ -16,11 +16,11 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { DirectionParameter } from "./directionParameter";
-import type { OrderByParameter } from "./orderByParameter";
-import type { PageParameter } from "./pageParameter";
-import type { PageSizeParameter } from "./pageSizeParameter";
-import type { SearchParameter } from "./searchParameter";
+import type { DirectionParameter } from './directionParameter';
+import type { OrderByParameter } from './orderByParameter';
+import type { PageParameter } from './pageParameter';
+import type { PageSizeParameter } from './pageSizeParameter';
+import type { SearchParameter } from './searchParameter';
 
 export type GetProjectsProjectIdTokensParams = {
   /**

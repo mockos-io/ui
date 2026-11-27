@@ -6,6 +6,7 @@
   --secondary-color: #8083ff;
   --error-color: #ef4444;
   --link-color: #c0c1ff;
+  --error-background-color: #93000a;
 
   --button-primary-background: #8083ff;
   --button-primary-foreground: #0d0096;
@@ -24,6 +25,18 @@
   --text-input-focus: #464554;
   --text-input-link: var(--link-color);
   --text-input-helper: #6b7280;
+
+  --toast-background: #1e2024;
+  --toast-border: #333539;
+  --toast-color: var(--primary-color);
+
+  --toast-error-background: color-mix(
+    in srgb,
+    var(--error-background-color) 10%,
+    transparent
+  );
+  --toast-error-border: color-mix(in srgb, #ffb4ab 20%, transparent);
+  --toast-error-color: color-mix(in srgb, #ffb4ab 90%, transparent);
 
   --divider-color: #333539;
 }

@@ -14,6 +14,7 @@ type TextInputProps = {
     ref?: Ref<HTMLInputElement>;
   };
   placeholder?: string;
+  disabled?: boolean;
   helperText?: string;
   error?: string;
   link?: string;
@@ -28,6 +29,7 @@ export default function TextInput({
   type = "text",
   inputProps,
   placeholder,
+  disabled,
   helperText,
   error,
   link,
@@ -67,6 +69,7 @@ export default function TextInput({
           type={inputType}
           value={value}
           placeholder={placeholder}
+          disabled={disabled}
           onChange={(event) => onChange?.(event.target.value)}
           className={`w-full rounded-sm border ${error ? "border-(--error-color)" : "border-(--text-input-border)"} bg-(--text-input-background) px-4 py-2 text-(--primary-color) outline-none focus:ring-2 focus:ring-(--text-input-focus) ${type === "password" ? "pr-11" : ""}`}
           {...inputProps}

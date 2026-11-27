@@ -16,7 +16,7 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { Project } from "./project";
+import type { Project } from './project';
 
 export interface ProjectList {
   projects: Project[];

@@ -3,21 +3,25 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useGetAuthGlogin, usePostAuthRegister } from "@/api/auth";
+import type { RegisterRequest } from "@/api/model";
 import Button from "@/components/Button";
 import Divider from "@/components/Divider";
 import TextInput from "@/components/TextInput";
-
-type RegisterFormValues = {
-  name: string;
-  email: string;
-  password: string;
-};
+import { ToastType, useToast } from "@/components/Toast";
+import { useRegister } from "./context/RegisterContext";
 
 export default function Register() {
   const t = useTranslations();
+  const router = useRouter();
+  const { showToast } = useToast();
+
+  const { setEmail } = useRegister();
 
   const signUpSchema = z.object({
     name: z.string().trim().min(1, t("COMMON.REQUIRED")),
@@ -36,17 +40,59 @@ export default function Register() {
     register,
     handleSubmit,
     formState: { errors, isValid },
-  } = useForm<RegisterFormValues>({
+  } = useForm<RegisterRequest>({
     resolver: zodResolver(signUpSchema),
-    mode: "onBlur",
+    mode: "onTouched",
   });
 
-  function signUp() {
-    //TODO: add logic
+  const onError = useCallback(
+    (message: string = t("COMMON.ERROR")) => {
+      showToast(message, 5000, "/error.svg", ToastType.ERROR);
+    },
+    [t, showToast],
+  );
+
+  const { mutate, isPending } = usePostAuthRegister({
+    mutation: {
+      onSuccess: (_response, variables) => {
+        setEmail(variables.data.email);
+
+        router.push("/auth/register/verify");
+      },
+      onError: (error) => onError(error.message),
+    },
+  });
+
+  const { refetch: startGoogleLogin, isFetching: isPendingGLogin } =
+    useGetAuthGlogin({
+      query: {
+        enabled: false,
+      },
+    });
+
+  const isLoading = useMemo(
+    () => isPending || isPendingGLogin,
+    [isPending, isPendingGLogin],
+  );
+
+  function signUp(values: RegisterRequest) {
+    mutate({ data: values });
   }
 
-  function singUpOAuth() {
-    //TODO: add logic
+  async function singUpOAuth() {
+    const authTab = window.open("about:blank", "_blank");
+
+    try {
+      const { data: response } = await startGoogleLogin();
+
+      if (response && authTab) {
+        authTab.location.href = response.data.url;
+      } else {
+        authTab?.close();
+      }
+    } catch {
+      authTab?.close();
+    }
   }
 
   return (
@@ -70,6 +116,7 @@ export default function Register() {
           placeholder={t("REGISTER.NAME_PLACEHOLDER")}
           name="name"
           type="text"
+          disabled={isLoading}
           inputProps={register("name")}
           error={errors.name?.message}
         />
@@ -79,6 +126,7 @@ export default function Register() {
           placeholder={t("REGISTER.EMAIL_PLACEHOLDER")}
           name="email"
           type="email"
+          disabled={isLoading}
           inputProps={register("email")}
           error={errors.email?.message}
         />
@@ -88,6 +136,7 @@ export default function Register() {
           placeholder={t("REGISTER.PASSWORD_PLACEHOLDER")}
           name="password"
           type="password"
+          disabled={isLoading}
           inputProps={register("password")}
           error={errors.password?.message}
         />
@@ -105,7 +154,7 @@ export default function Register() {
           </div>
         )}
 
-        <Button type="submit" disabled={!isValid}>
+        <Button type="submit" disabled={!isValid || isLoading}>
           {t("REGISTER.SIGN_UP")}
           <Image
             className="h-3 w-3"
@@ -124,7 +173,7 @@ export default function Register() {
           <Divider />
         </div>
 
-        <Button variant="secondary" onClick={singUpOAuth}>
+        <Button variant="secondary" onClick={singUpOAuth} disabled={isLoading}>
           <Image
             className="h-5 w-5"
             src="/google.svg"

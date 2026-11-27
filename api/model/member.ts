@@ -16,8 +16,8 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { MemberRole } from "./memberRole";
-import type { MemberUser } from "./memberUser";
+import type { MemberRole } from './memberRole';
+import type { MemberUser } from './memberUser';
 
 export interface Member {
   id: number;

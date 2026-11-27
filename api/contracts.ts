@@ -16,14 +16,15 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-
+import {
+  useMutation
+} from '@tanstack/react-query';
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
-  UseMutationResult,
-} from "@tanstack/react-query";
-import { useMutation } from "@tanstack/react-query";
+  UseMutationResult
+} from '@tanstack/react-query';
 
 import type {
   BadRequestResponse,
@@ -31,92 +32,78 @@ import type {
   ImportContractRequest,
   Message,
   NotFoundResponse,
-  UnauthorizedResponse,
-} from "./model";
+  UnauthorizedResponse
+} from './model';
 
-const getHeaders = (
-  ...sources: (
-    | RequestInit["headers"]
-    | Record<
-        string,
-        string | number | boolean | bigint | readonly string[] | undefined
-      >
-  )[]
-) => {
+import { fetcher } from '../lib/api-fetcher';
+
+
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | number | boolean | bigint | readonly string[] | undefined>)[]) => {
   const seen = new Set<string>();
   const layers: [string, string | readonly string[]][][] = [];
   for (const source of sources.reverse()) {
     if (!source) continue;
-    const entries =
-      source instanceof Headers
-        ? source.entries()
-        : Symbol.iterator in source
-          ? Array.from(
-              source as Iterable<Iterable<string>>,
-              (entry) => Array.from(entry) as [string, string],
-            )
-          : Object.entries<
-              string | number | boolean | bigint | readonly string[] | undefined
-            >(source);
+    const entries = source instanceof Headers
+      ? source.entries()
+      : Symbol.iterator in source
+        ? Array.from(source as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string])
+        : Object.entries<string | number | boolean | bigint | readonly string[] | undefined>(source);
     const layer: [string, string | readonly string[]][] = [];
     for (const [name, value] of entries) {
-      if (value !== undefined && !seen.has(name.toLowerCase()))
-        layer.push([name, typeof value === "object" ? value : String(value)]);
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, typeof value === 'object' ? value : String(value)]);
     }
     for (const [name] of layer) seen.add(name.toLowerCase());
     layers.push(layer);
   }
-  return Object.fromEntries(layers.reverse().flat()) as Extract<
-    RequestInit["headers"],
-    Record<string, unknown>
-  >;
+  return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
 };
+
 
 export type postProjectsProjectIdContractsResponse200 = {
-  data: Message;
-  status: 200;
-};
+  data: Message
+  status: 200
+}
 
 export type postProjectsProjectIdContractsResponse400 = {
-  data: BadRequestResponse;
-  status: 400;
-};
+  data: BadRequestResponse
+  status: 400
+}
 
 export type postProjectsProjectIdContractsResponse401 = {
-  data: UnauthorizedResponse;
-  status: 401;
-};
+  data: UnauthorizedResponse
+  status: 401
+}
 
 export type postProjectsProjectIdContractsResponse403 = {
-  data: ForbiddenResponse;
-  status: 403;
-};
+  data: ForbiddenResponse
+  status: 403
+}
 
 export type postProjectsProjectIdContractsResponse404 = {
-  data: NotFoundResponse;
-  status: 404;
-};
+  data: NotFoundResponse
+  status: 404
+}
 
-export type postProjectsProjectIdContractsResponseSuccess =
-  postProjectsProjectIdContractsResponse200 & {
-    headers: Headers;
-  };
-export type postProjectsProjectIdContractsResponseError = (
-  | postProjectsProjectIdContractsResponse400
-  | postProjectsProjectIdContractsResponse401
-  | postProjectsProjectIdContractsResponse403
-  | postProjectsProjectIdContractsResponse404
-) & {
+export type postProjectsProjectIdContractsResponseSuccess = (postProjectsProjectIdContractsResponse200) & {
+  headers: Headers;
+};
+export type postProjectsProjectIdContractsResponseError = (postProjectsProjectIdContractsResponse400 | postProjectsProjectIdContractsResponse401 | postProjectsProjectIdContractsResponse403 | postProjectsProjectIdContractsResponse404) & {
   headers: Headers;
 };
 
-export type postProjectsProjectIdContractsResponse =
-  | postProjectsProjectIdContractsResponseSuccess
-  | postProjectsProjectIdContractsResponseError;
+export type postProjectsProjectIdContractsResponse = (postProjectsProjectIdContractsResponseSuccess | postProjectsProjectIdContractsResponseError)
 
-export const getPostProjectsProjectIdContractsUrl = (projectId: number) => {
-  return `/projects/${projectId}/contracts`;
-};
+export const getPostProjectsProjectIdContractsUrl = (projectId: number,) => {
+
+
+
+
+  return `/projects/${projectId}/contracts`
+}
 
 /**
  * Creates routes and responses in the project from an OpenAPI contract in
@@ -130,93 +117,57 @@ export const getPostProjectsProjectIdContractsUrl = (projectId: number) => {
  *   and adds the contract's responses to matching existing routes.
  * @summary Import an OpenAPI contract
  */
-export const postProjectsProjectIdContracts = async (
-  projectId: number,
-  importContractRequest: ImportContractRequest,
-  options?: RequestInit,
-): Promise<postProjectsProjectIdContractsResponse> => {
-  const res = await fetch(getPostProjectsProjectIdContractsUrl(projectId), {
+export const postProjectsProjectIdContracts = async (projectId: number,
+    importContractRequest: ImportContractRequest, options?: Parameters<typeof fetcher>[1]): Promise<postProjectsProjectIdContractsResponse> => {
+
+  return fetcher<postProjectsProjectIdContractsResponse>(getPostProjectsProjectIdContractsUrl(projectId),
+  {
     ...options,
-    method: "POST",
-    headers: getHeaders(
-      { "Content-Type": "application/json" },
-      options?.headers,
-    ),
-    body: JSON.stringify(importContractRequest),
-  });
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(importContractRequest)
+  }
+);}
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postProjectsProjectIdContractsResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
-  return {
-    data,
-    status: res.status,
-    headers: res.headers,
-  } as postProjectsProjectIdContractsResponse;
-};
 
-export const getPostProjectsProjectIdContractsMutationKey = () =>
-  ["postProjectsProjectIdContracts"] as const;
 
-export const getPostProjectsProjectIdContractsMutationOptions = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postProjectsProjectIdContracts>>,
-    TError,
-    PostProjectsProjectIdContractsMutationVariables,
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postProjectsProjectIdContracts>>,
-  TError,
-  PostProjectsProjectIdContractsMutationVariables,
-  TContext
-> => {
-  const mutationKey = getPostProjectsProjectIdContractsMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postProjectsProjectIdContracts>>,
-    PostProjectsProjectIdContractsMutationVariables
-  > = (props) => {
-    const { projectId, data } = props ?? {};
+export const getPostProjectsProjectIdContractsMutationKey = () => ['postProjectsProjectIdContracts'] as const;
 
-    return postProjectsProjectIdContracts(projectId, data, fetchOptions);
-  };
+export const getPostProjectsProjectIdContractsMutationOptions = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdContracts>>, TError,PostProjectsProjectIdContractsMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+): UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdContracts>>, TError,PostProjectsProjectIdContractsMutationVariables, TContext> => {
 
-  return { mutationFn, ...mutationOptions };
-};
+const mutationKey = getPostProjectsProjectIdContractsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type PostProjectsProjectIdContractsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postProjectsProjectIdContracts>>
->;
-export type PostProjectsProjectIdContractsMutationBody = ImportContractRequest;
-export type PostProjectsProjectIdContractsMutationError =
-  | BadRequestResponse
-  | UnauthorizedResponse
-  | ForbiddenResponse
-  | NotFoundResponse;
-export type PostProjectsProjectIdContractsMutationVariables = {
-  projectId: number;
-  data: ImportContractRequest;
-};
 
-/**
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postProjectsProjectIdContracts>>, PostProjectsProjectIdContractsMutationVariables> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  postProjectsProjectIdContracts(projectId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostProjectsProjectIdContractsMutationResult = NonNullable<Awaited<ReturnType<typeof postProjectsProjectIdContracts>>>
+    export type PostProjectsProjectIdContractsMutationBody = ImportContractRequest
+    export type PostProjectsProjectIdContractsMutationError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+    export type PostProjectsProjectIdContractsMutationVariables = {projectId: number;data: ImportContractRequest}
+
+    /**
  * Creates routes and responses in the project from an OpenAPI contract in
  * YAML or JSON. Only editors and administrators can do this.
  *
@@ -228,32 +179,13 @@ export type PostProjectsProjectIdContractsMutationVariables = {
  *   and adds the contract's responses to matching existing routes.
  * @summary Import an OpenAPI contract
  */
-export const usePostProjectsProjectIdContracts = <
-  TError =
-    | BadRequestResponse
-    | UnauthorizedResponse
-    | ForbiddenResponse
-    | NotFoundResponse,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postProjectsProjectIdContracts>>,
-      TError,
-      PostProjectsProjectIdContractsMutationVariables,
-      TContext
-    >;
-    fetch?: RequestInit;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof postProjectsProjectIdContracts>>,
-  TError,
-  PostProjectsProjectIdContractsMutationVariables,
-  TContext
-> => {
-  return useMutation(
-    getPostProjectsProjectIdContractsMutationOptions(options),
-    queryClient,
-  );
-};
+export const usePostProjectsProjectIdContracts = <TError = BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postProjectsProjectIdContracts>>, TError,PostProjectsProjectIdContractsMutationVariables, TContext>, request?: SecondParameter<typeof fetcher>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postProjectsProjectIdContracts>>,
+        TError,
+        PostProjectsProjectIdContractsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostProjectsProjectIdContractsMutationOptions(options), queryClient);
+    }

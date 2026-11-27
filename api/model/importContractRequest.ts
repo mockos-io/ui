@@ -16,7 +16,7 @@
  *
  * OpenAPI spec version: 3.0.0
  */
-import type { ImportMode } from "./importMode";
+import type { ImportMode } from './importMode';
 
 export interface ImportContractRequest {
   /** OpenAPI document in YAML or JSON format. */
